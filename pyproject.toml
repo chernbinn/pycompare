@@ -1,0 +1,45 @@
+[build-system]
+requires = [
+    "setuptools>=42", 
+    "setuptools-git-versioning>=2.0,<3"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycompare-gui"
+dynamic = ["version"]  # 声明动态版本
+description = "文本对比工具"
+authors = [
+    {name = "shibing chen", email = "binnchern@163.com"}
+]
+readme = "README.md"
+license = "MIT"
+#repository = "https://gitee.com/binnchern/cmdbox"
+dependencies = [
+]
+requires-python = ">=3.11.2"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>4.0",
+    "setuptools-git-versioning>=2.0,<3",
+]
+
+[project.scripts]
+pycompare = "cmdbox_commands.pycompare.pycompare:cli"
+
+#[project.gui-scripts]
+#pycompare = "cmdbox_commands.pycompare.pycompare:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+    "pycompare"
+]
+
+[tool.setuptools.package-data]
+"cmdbox_commands.task_manager" = ["*.j2"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+version_callback = "scripts.git_versioning_callback:install_version"
