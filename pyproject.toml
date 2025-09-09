@@ -16,6 +16,9 @@ readme = "README.md"
 license = "MIT"
 #repository = "https://gitee.com/binnchern/cmdbox"
 dependencies = [
+    "click>=8.2.1",
+    "numpy>=2.3.2",
+    "psutil>=7.0.0",
 ]
 requires-python = ">=3.11.2"
 
@@ -26,19 +29,16 @@ dev = [
 ]
 
 [project.scripts]
-pycompare = "cmdbox_commands.pycompare.pycompare:cli"
+pycompare-gui = "pycompare.pycompare:cli"
 
 #[project.gui-scripts]
-#pycompare = "cmdbox_commands.pycompare.pycompare:cli"
+#pycompare = "pycompare.pycompare:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = [
     "pycompare"
 ]
-
-[tool.setuptools.package-data]
-"cmdbox_commands.task_manager" = ["*.j2"]
 
 [tool.setuptools-git-versioning]
 enabled = true

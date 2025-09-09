@@ -15,7 +15,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
-from cmdbox_commands.pycompare.logger import StructuredLogger, log_function
+from pycompare.logger import StructuredLogger, log_function
 
 from pycompare._version import __version__
 
