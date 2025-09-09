@@ -17,6 +17,8 @@ from tkinter import messagebox
 from tkinter import filedialog
 from cmdbox_commands.pycompare.logger import StructuredLogger, log_function
 
+from pycompare._version import __version__
+
 QUEUE_EVENT_LOG = False
 TEXT_TAG_LOG = False
 GET_AREA_LOG = False
@@ -1746,6 +1748,7 @@ def test(context):
 
 @click.command()
 @click.help_option('-h', '--help')
+@click.version_option(version=__version__, prog_name='pycompare')
 def cli():
     #set_start_method('spawn', force=True)  # 解决Windows兼容性问题
 

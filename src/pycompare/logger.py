@@ -10,7 +10,7 @@ import traceback
 from functools import lru_cache
 from pathlib import Path
 
-_default_config_path = Path.home() / ".cmdbox"/ "pycompare"
+_default_config_path = Path(os.getcwd()) / "pycompare-gui"
 class LoggerConfig:
     """日志配置类"""
     DEFAULT_CONFIG = {

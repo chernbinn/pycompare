@@ -19,7 +19,7 @@ except:
 # --------------------------------------
 # project global config
 #_______________________________________
-g_version_file = Path(__file__).parent.parent / "src" / "cmdbox" / "_version.py"
+g_version_file = Path(__file__).parent.parent / "src" / "pycompare" / "_version.py"
 g_git_path = Path(__file__).parent.parent / ".git"
 g_config = {
         "enabled": True,
