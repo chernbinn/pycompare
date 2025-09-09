@@ -5,8 +5,16 @@ build/
 dist/
 wheels/
 *.egg-info
+*.exe
+*.log
 
 # Virtual environments
 .venv
 
 /pycompare-gui
+_version.py
+
+# temp files of package exe
+nuitka-crash-report.xml
+/*.dist
+/*.build

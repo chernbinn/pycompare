@@ -26,13 +26,15 @@ requires-python = ">=3.11.2"
 dev = [
     "pre-commit>4.0",
     "setuptools-git-versioning>=2.0,<3",
+    "nuitka>=2.7.14",
+    "zstandard>=0.24.0",
 ]
 
-[project.scripts]
-pycompare-gui = "pycompare.pycompare:cli"
+#[project.scripts]
+#pycompare-gui = "pycompare.pycompare:cli"
 
-#[project.gui-scripts]
-#pycompare = "pycompare.pycompare:cli"
+[project.gui-scripts]
+pycompare-gui = "pycompare.pycompare:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
