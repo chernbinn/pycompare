@@ -28,8 +28,25 @@ function Clean-Folder {
 
 # 统一清理函数
 function Clean-Temp {
-    Write-Host "🧹 Cleaning temporary folders..." -ForegroundColor Yellow
+    Write-Host "🧹 Cleaning temporary folders..." -ForegroundColor Yellow    
 
+    # 如果dist目录下存在exe文件，拷贝到dist目录的父目录的backup目录
+    if (Test-Path "dist") {
+        $exeFiles = Get-ChildItem -Path "dist" -Filter "*.exe" -File
+        if ($exeFiles) {
+            Write-Host "📋 Found $($exeFiles.Count) exe files in dist directory." -ForegroundColor Cyan
+            Write-Host "📋 Backing up exe files to backup directory" -ForegroundColor Cyan
+            $backupDir = Join-Path -Path "." -ChildPath "backup"
+            if (-not (Test-Path $backupDir)) {
+                New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+            }
+            foreach ($file in $exeFiles) {
+                Write-Host "📋 Copying $($file.FullName) to $backupDir" -ForegroundColor Cyan
+                Copy-Item -Path $file.FullName -Destination $backupDir -Force
+            }
+        }
+    }
+    
     # 普通目录
     Clean-Folder -FolderPath "build"
     Clean-Folder -FolderPath "dist"
@@ -52,12 +69,6 @@ $ver = $(git describe --tags --always)
 Write-Host "Building pycompare $ver ..." -ForegroundColor Green
 
 # === 清理旧文件 ===
-$exeName = "pycompare-gui-$ver.exe"
-if (Test-Path $exeName) {
-    Remove-Item $exeName
-    Write-Host "🗑️  Removed old exe: $exeName" -ForegroundColor Yellow
-}
-
 # 清理临时构建目录
 Clean-Temp
 
@@ -73,16 +84,57 @@ if __name__ == "__main__":
 "@ | Out-File -Encoding utf8 main.py
 }
 
+# 清除缓存
+python -m nuitka --clean-cache=all
 
 # === 打包 ===
+# 当前时间
+$now = Get-Date -Format "yyyyMMddHHmmss"
+$exe_name = "pycompare-gui-$ver-$now.exe"
+$opt_exe_name = "pycompare-gui-$ver-$now-opt.exe"
 python -m nuitka `
   --standalone `
   --onefile `
-  --windows-console-mode=attach `
+  --onefile-no-dll `
+  --windows-console-mode=disable `
   --enable-plugin=tk-inter `
   --include-package=pycompare `
-  --output-file="pycompare-gui-$ver.exe" `
+  --nofollow-import-to=*.tests `
+  --nofollow-import-to=*.test `
+  --nofollow-import-to=*.testing `
+  --nofollow-import-to=*.debug `
+  --noinclude-pytest-mode=error `
+  --noinclude-setuptools-mode=error `
+  --noinclude-unittest-mode=error `
+  --noinclude-IPython-mode=error `
+  --noinclude-dask-mode=error `
+  --noinclude-numba-mode=error `
+  --noinclude-data-files=*.pyc `
+  --noinclude-data-files=*.pyo `
+  --noinclude-data-files=*.txt `
+  --noinclude-data-files=*.md `
+  --noinclude-data-files=*.rst `
+  --noinclude-data-files=*.html `
+  --noinclude-data-files=*.log `
+  --onefile-no-compression `
+  --cf-protection=none `
+  --lto=yes `
+  --jobs=4 `
+  --prefer-source-code `
+  --no-debug-c-warnings `
+  --no-debug-immortal-assumptions `
+  --warn-implicit-exceptions `
+  --warn-unusual-code `
+  --python-flag=-O,no_docstrings,-u,isolated,-P,no_warnings,-S `
+  --no-pyi-stubs `
+  --no-pyi-file `
+  --deployment `
+  --module-name-choice=original `
+  --output-filename=$exe_name `
+  --output-dir=dist `
   main.py
+#upx --best --lzma --compress-icons=0 --compress-exports=1 -9 $exe_name
+upx --ultra-brute --lzma --compress-icons=0 --compress-exports=1 dist/$exe_name -o dist/$opt_exe_name
 
 # === 清理临时文件 ===
 #if (Test-Path "main.py") {
@@ -90,14 +142,18 @@ python -m nuitka `
 #}
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Done -> pycompare-gui-$ver.exe" -ForegroundColor Green
+    Write-Host "✅ Done -> $exe_name" -ForegroundColor Green
 } else {
     Write-Host "❌ Build failed with exit code: $LASTEXITCODE" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-# --no-dependency-walker \
-# --windows-icon-from-ico=app.ico
+# --no-dependency-walker  不校验依赖
+# --windows-icon-from-ico=app.ico 为exe添加图标
+# --windows-console-mode=attach  调试使用
+# --mingw64 编译c\c++代码相对更优且更省控件；不使用该选项时，默认使用windows自带编译工具
+# --module-name-choice=original  不使用相对导入，使启动更快
+# --clean-cache=all不使用缓存
 
 #python -m nuitka `
 #  --standalone `                    # 启用独立打包
