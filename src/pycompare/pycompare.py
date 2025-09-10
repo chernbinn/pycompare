@@ -20,7 +20,7 @@ class Application:
         self.root.config(menu=main_menu)
 
         main_menu.add_command(label="刷新",
-            comman=lambda:messagebox.showinfo(title='tip', message="maybe wait!"))
+            command=lambda:self.workspace.refresh_compare_F5(None, None, self.workspace.__dict__['__argsdict']))
         # 帮助
         help_menu = Menu(main_menu, tearoff=False)
         main_menu.add_cascade(label="帮助", menu=help_menu)

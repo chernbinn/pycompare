@@ -189,6 +189,8 @@ class Workspace:
         l_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
         r_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
 
+        self.__dict__['__argsdict'] = argsdict
+
     @staticmethod
     def sync_scroll(text_a, text_b, line_num_a, line_num_b, fl_a, fl_b, *args):
             """同步滚动两个Text组件"""
