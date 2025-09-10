@@ -1,0 +1,12 @@
+# for log
+QUEUE_EVENT_LOG = False
+TEXT_TAG_LOG = False
+GET_AREA_LOG = False
+DEBUG_TAG = False
+MERGE_TAG_LOG = False
+MODIFY_REVIEW_LOG = False
+COMPARE_RESULT_LOG = False
+
+# for compare_core
+COMPARE_AUTOJUNK = False
+JUNK_STR_PATTERN = " \n"

@@ -46,7 +46,7 @@ function Clean-Temp {
             }
         }
     }
-    
+
     # 普通目录
     Clean-Folder -FolderPath "build"
     Clean-Folder -FolderPath "dist"
@@ -99,6 +99,7 @@ python -m nuitka `
   --windows-console-mode=disable `
   --enable-plugin=tk-inter `
   --include-package=pycompare `
+  --show-modules-output=dist/modules.txt `
   --nofollow-import-to=*.tests `
   --nofollow-import-to=*.test `
   --nofollow-import-to=*.testing `
