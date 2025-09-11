@@ -15,7 +15,7 @@ def set_event_group(event_group):
 def update_cursor_position(text, event, argsdict):
     # logger.debug(f"update_cursor_position 事件")
     text = event.widget
-    if text == None: return
+    if text == None or text.cget('state') == 'disabled': return
 
     tag_area = argsdict.get('tagarea')
     tag_area.tag_remove("selected_text", '1.0', 'end')

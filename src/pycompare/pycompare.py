@@ -15,15 +15,20 @@ class Application:
         self.workspace = Workspace(root, self.statusvar)
         self.status_bar()
 
+    def about(self):
+        messagebox.showinfo("关于", "文本对比工具\n版本：" + __version__)
+
     def menu(self):
         main_menu = Menu(self.root)
         self.root.config(menu=main_menu)
 
-        main_menu.add_command(label="刷新",
+        main_menu.add_command(label="刷新(F5)",
             command=lambda:self.workspace.refresh_compare_F5(None, None, self.workspace.__dict__['__argsdict']))
-        # 帮助
-        help_menu = Menu(main_menu, tearoff=False)
-        main_menu.add_cascade(label="帮助", menu=help_menu)
+        # 全局处理快捷键F5
+        self.root.bind('<F5>', lambda event: self.workspace.refresh_compare_F5(None, None, self.workspace.__dict__['__argsdict']))
+
+        main_menu.add_command(label="关于",
+            command=lambda:self.about())
 
     def status_bar(self):        
         statusbar = ttk.Label(self.root, relief=RAISED, borderwidth=1, textvariable=self.statusvar)

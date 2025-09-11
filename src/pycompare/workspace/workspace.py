@@ -440,9 +440,12 @@ class Workspace:
         return generate_file_numbers
 
     @staticmethod
-    @group_event_decorator(event_type="refresh", debounce_time=10)
     def refresh_compare_F5(text_area, event, argsdict):
         logger.debug(f"refresh 事件触发")
+        workspace_instance = argsdict.get('workspace')  # 确保传入了 workspace 实例
+        if workspace_instance.is_refreshing:
+            logger.debug("刷新对比已在进行中，忽略重复触发")
+            return
 
         text_area = argsdict.get("textarea")
         tag_area = argsdict.get("tagarea")
@@ -473,8 +476,7 @@ class Workspace:
                 title='保存文件提示',
                 message=msg
             )
-        """
-        workspace_instance = argsdict.get('workspace')  # 确保传入了 workspace 实例
+        """        
         if workspace_instance:
             workspace_instance.start_async_refresh(
                 text_area=text_area,

@@ -164,7 +164,7 @@ def parallel_sim_matrix(content1, content2):
         raise
 
     # 动态获取CPU核心数
-    workers = os.cpu_count() or 2  # 默认取逻辑核心数，若获取失败则设为2
+    workers = int(os.cpu_count()/2) or 2  # 默认取逻辑核心数，若获取失败则设为2
 
     try:
         with ProcessPoolExecutor(max_workers=workers) as executor:
