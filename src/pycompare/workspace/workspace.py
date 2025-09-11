@@ -1,6 +1,8 @@
 import queue
+import threading
 from tkinter import *
 from tkinter import ttk
+import tkinter.messagebox as messagebox
 
 from pycompare.workspace.editor import Editor
 from pycompare.compare_core.compare_core import (
@@ -18,10 +20,13 @@ logger = setup_logging(logging.DEBUG, log_tag=__name__)
 
 class Workspace:
     def __init__(self, root, statusvar):
+        self.is_refreshing = False
+        self.root = root
+        self.refresh_queue = queue.Queue()
+        self.statusvar = statusvar
         #++++++++++++++++++++++++++++
         # 文件对比操作区
-        #++++++++++++++++++++++++++++
-        self.statusvar = statusvar
+        #++++++++++++++++++++++++++++        
         workspace = Frame(root)
         workspace.pack(side=TOP, fill=BOTH, expand=True)
         openORsave = Frame(workspace)
@@ -138,7 +143,7 @@ class Workspace:
             'tagflines': rfl,
             'modified': 'left'
         }
-        l_select_button.bind('<Button-1>', lambda *args: Editor.select_file(l_path_var))
+        l_select_button.bind('<Button-1>', lambda *args: Editor.select_file(l_path_var, openORsave))
         l_path_var.trace_add('write', lambda *args: Editor.load_file(l_path_var, l_text_area, l_pathbox, l_args))
         r_args = {
             'tagpathvar': l_path_var,
@@ -149,7 +154,7 @@ class Workspace:
             'tagflines': lfl,
             'modified': 'right'
         }
-        r_select_button.bind('<Button-1>', lambda *args: Editor.select_file(r_path_var))
+        r_select_button.bind('<Button-1>', lambda *args: Editor.select_file(r_path_var, openORsave))
         r_path_var.trace_add('write', lambda *args: Editor.load_file(r_path_var, r_text_area, r_pathbox, r_args))
 
         l_save_button.bind('<Button-1>', lambda *args: Editor.save_file(l_path_var, l_text_area))
@@ -185,11 +190,14 @@ class Workspace:
             'taglines': r_line_numbers,
             'textflines': lfl,
             'tagflines': rfl,
+            'workspace': self
         }
         l_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
         r_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
 
         self.__dict__['__argsdict'] = argsdict
+        Editor.initialize(openORsave, l_text_area)
+        Editor.initialize(openORsave, r_text_area)
 
     @staticmethod
     def sync_scroll(text_a, text_b, line_num_a, line_num_b, fl_a, fl_b, *args):
@@ -466,31 +474,137 @@ class Workspace:
                 message=msg
             )
         """
+        workspace_instance = argsdict.get('workspace')  # 确保传入了 workspace 实例
+        if workspace_instance:
+            workspace_instance.start_async_refresh(
+                text_area=text_area,
+                tag_area=tag_area,
+                text_line_numbers=text_line_numbers,
+                tag_line_numbers=tag_line_numbers,
+                lfl=lfl, rfl=rfl
+            )
 
-        Editor.line_number_reset(text_line_numbers)
-        Editor.line_number_reset(tag_line_numbers)
-        Editor.line_number_reset(lfl)
-        Editor.line_number_reset(rfl)
-        
-        text_content = Editor.get_area(text_area)
-        tag_content = Editor.get_area(tag_area)
-        Editor.text_area_reset(tag_area)
-        Editor.text_area_reset(text_area)
-        text_area.tag_delete(text_area.tag_names())
-        tag_area.tag_delete(tag_area.tag_names())
+    def start_async_refresh(self, text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl):
+        """启动异步刷新任务"""
+        if self.is_refreshing:
+            return  # 防止重复执行
 
-        # 配置显示样式
-        Editor.configure_tags(text_area)
-        Editor.configure_tags(tag_area)
+        self.is_refreshing = True
+        self.statusvar.set("正在刷新对比...")
+
+        # === 主线程：更新 UI 表示正在刷新 ===
+        for widget in [text_area, tag_area]:
+            widget.config(cursor="wait")
+        self.root.update_idletasks()
         
+        # 可选：禁用某些控件
+        for widget in [text_area, tag_area]:
+            if hasattr(widget, 'config'):
+                widget.config(state='disabled')
+
+        # 清除旧事件（可在主线程快速完成）
         clear_event_queue(text_area.__dict__.get('__eventqueue'))
-        clear_event_queue(tag_area.__dict__.get('__eventqueue'))
-        
-        logger.debug("刷新对比内容")
-        match_pairs = compare_files(text_content, tag_content)
-        Workspace.display_results(text_area, tag_area, text_content, tag_content, match_pairs, lfl, rfl)
-        
-        Editor.update_line_numbers(text_area, text_line_numbers, tag_line_numbers)
+        clear_event_queue(tag_area.__dict__.get('__eventqueue'))        
+
+        # 获取文本内容（也可以放子线程）
+        left_content = Editor.get_area(text_area)
+        right_content = Editor.get_area(tag_area)
+
+        # === 子线程执行耗时操作 ===
+        def worker():
+            try:
+                # 执行耗时的对比逻辑
+                logger.debug("后台线程开始执行 compare_files")
+                match_pairs = compare_files(left_content, right_content)
+
+                # 成功后将结果放入队列
+                self.refresh_queue.put({
+                    'status': 'success',
+                    'data': {
+                        'match_pairs': match_pairs,
+                        'left_content': left_content,
+                        'right_content': right_content,
+                        'widgets': (text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl)
+                    }
+                })
+            except Exception as e:
+                import traceback
+                error_msg = traceback.format_exc()
+                self.refresh_queue.put({
+                    'status': 'error',
+                    'data': str(e),
+                    'traceback': error_msg,
+                    'widgets': (text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl)
+                })
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
+        # 启动轮询检查结果
+        self.poll_refresh_result()
+
+    def poll_refresh_result(self):
+        """检查子线程是否返回结果"""
+        try:
+            while self.is_refreshing:
+                result = self.refresh_queue.get_nowait()
+                self.handle_refresh_result(result)
+        except:
+            # 队列为空，继续等待
+            if self.is_refreshing:
+                self.root.after(50, self.poll_refresh_result)  # 每 50ms 检查一次
+
+    def handle_refresh_result(self, result):
+        """处理刷新结果（在主线程执行）"""
+        self.statusvar.set("对比刷新完成")
+        self.is_refreshing = False
+        self.root.config(cursor="")  # 恢复光标
+
+        text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl = \
+            result['data']['widgets']
+
+        # 回复子空间光标
+        for widget in [text_area, tag_area]:
+            widget.config(cursor="")
+        self.root.update_idletasks()
+
+        # 恢复文本框可用状态
+        for widget in [text_area, tag_area]:
+            if hasattr(widget, 'config'):
+                widget.config(state='normal')
+
+        if result['status'] == 'success':
+            data = result['data']
+
+            # 重置行号显示（轻量级操作，可放主线程）
+            Editor.line_number_reset(text_line_numbers)
+            Editor.line_number_reset(tag_line_numbers)
+            Editor.line_number_reset(lfl)
+            Editor.line_number_reset(rfl)
+            
+            # 重置文本区域（主线程）
+            Editor.text_area_reset(text_area)
+            Editor.text_area_reset(tag_area)
+            text_area.tag_delete(*text_area.tag_names())
+            tag_area.tag_delete(*tag_area.tag_names())
+
+            Editor.configure_tags(text_area)
+            Editor.configure_tags(tag_area)
+
+            # 显示结果（确保此方法是线程安全的，通常它是）
+            Workspace.display_results(
+                text_area, tag_area,
+                data['left_content'], data['right_content'],
+                data['match_pairs'], lfl, rfl
+            )
+
+            # 更新行号
+            Editor.update_line_numbers(text_area, text_line_numbers, tag_line_numbers)
+
+            logger.debug("异步刷新完成")
+        else:
+            logger.error(f"刷新失败: {result['data']}\n{result.get('traceback', '')}")
+            messagebox.showerror("刷新错误", f"刷新失败：{result['data']}")
 
     """
     left_text_area: 被修改区域text控件

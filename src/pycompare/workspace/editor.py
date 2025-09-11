@@ -6,6 +6,7 @@ from pycompare.workspace.events_queue import (
     update_cursor_position,
     set_event_group
 )
+from pycompare.workspace.file_selector import FileSelector
 from pycompare.config import QUEUE_EVENT_LOG, DEBUG_TAG, GET_AREA_LOG
 
 import logging
@@ -299,6 +300,10 @@ class Editor:
             return current_index, text_start, text_end    
     # --------- end EditorHandler --------------
     @staticmethod
+    def initialize(root, text_area):
+        FileSelector.preload_file_dialog(root)
+
+    @staticmethod
     def text_area_bind(text_area, argsdict):
         text_area.bind("<<Selection>>", lambda event: Editor.EditorEvent.on_selection(text_area, event, argsdict))
         text_area.bind("<<Paste>>", lambda event: Editor.EditorEvent.on_paste(text_area, event, argsdict))
@@ -528,7 +533,9 @@ class Editor:
         Editor.update_line_numbers(text_area, text_line_numbers, tag_line_numbers)
         
     @staticmethod
-    def select_file(path_var):
+    def select_file(path_var, root):
+        FileSelector.select_file(path_var, root)
+        """
         file_path = filedialog.askopenfilename(
             title="选择文件",
             filetypes=[("所有文件", "*.*"), ("文本文件", "*.txt"), ("Python 文件", "*.py")],
@@ -537,6 +544,7 @@ class Editor:
             # msgbox.showinfo(title='提示', message=f"选择的文件路径是: {file_path}")
             # 你也可以在这里将文件路径设置到某个控件中，例如 Combobox 或 Entry
             path_var.set(file_path)
+        """
 
     @staticmethod    
     def save_file(filepath_var, text_area):
