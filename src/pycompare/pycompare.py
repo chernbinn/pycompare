@@ -2,6 +2,7 @@
 import click
 from tkinter import *
 from tkinter import ttk
+from tkinterdnd2 import TkinterDnD
 from tkinter import messagebox
 from pycompare.workspace.workspace import Workspace
 
@@ -40,7 +41,7 @@ class Application:
 def cli():
     #set_start_method('spawn', force=True)  # 解决Windows兼容性问题
 
-    root = Tk()
+    root = TkinterDnD.Tk()
     root.title("文本对比工具")
     root.state('zoomed')
     app = Application(root)

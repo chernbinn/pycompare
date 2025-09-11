@@ -1,8 +1,10 @@
 import queue
 import threading
+import tkinter.messagebox as messagebox
 from tkinter import *
 from tkinter import ttk
-import tkinter.messagebox as messagebox
+from tkinterdnd2 import DND_FILES
+from pycompare.workspace.file_drop import FileDrop
 
 from pycompare.workspace.editor import Editor
 from pycompare.compare_core.compare_core import (
@@ -145,6 +147,9 @@ class Workspace:
         }
         l_select_button.bind('<Button-1>', lambda *args: Editor.select_file(l_path_var, openORsave))
         l_path_var.trace_add('write', lambda *args: Editor.load_file(l_path_var, l_text_area, l_pathbox, l_args))
+        l_text_area.drop_target_register(DND_FILES)
+        l_text_area.dnd_bind('<<Drop>>', lambda event: FileDrop(text_frame, l_text_area, l_path_var).on_drop(event))
+
         r_args = {
             'tagpathvar': l_path_var,
             'tagarea': l_text_area, 
@@ -156,6 +161,8 @@ class Workspace:
         }
         r_select_button.bind('<Button-1>', lambda *args: Editor.select_file(r_path_var, openORsave))
         r_path_var.trace_add('write', lambda *args: Editor.load_file(r_path_var, r_text_area, r_pathbox, r_args))
+        r_text_area.drop_target_register(DND_FILES)
+        r_text_area.dnd_bind('<<Drop>>', lambda event: FileDrop(text_frame, r_text_area, r_path_var).on_drop(event))
 
         l_save_button.bind('<Button-1>', lambda *args: Editor.save_file(l_path_var, l_text_area))
         r_save_button.bind('<Button-1>', lambda *args: Editor.save_file(r_path_var, r_text_area))
