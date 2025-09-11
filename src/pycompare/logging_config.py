@@ -46,7 +46,7 @@ def is_development_mode():
     return True
 
 # 需要开发者主动配置,可以是相对路径，也可以是绝对路径（相对于当前文件logging_config.py的路径）
-_config_path = Path.home() / "myagent" / "logging.json"
+_config_path = Path.home() / "pycompare" / "logging.json"
 _log_path = None
 if is_development_mode():
     _config_path = Path(__file__).parent.parent.parent / 'logging.json'
@@ -331,7 +331,7 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
     log_path = Path(log_path).resolve()
     #print(f"--log_path: {log_path}")
     
-    enable_file = _current_config["file_logging"]["enabled"] if _current_config.get("file_logging", {}).get("enabled") else False
+    enable_file = True if _current_config.get("file_logging", {}).get("enabled") else False
     if not log_path:
         enable_file = False
     # 获取调用模块名称
@@ -352,8 +352,7 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
         _current_config["log_format"] if _current_config.get("log_format", None) else
         '%(asctime)s-%(funcName)s:%(lineno)d-%(levelname)s-[%(name)s]: %(message)s'
     )
-    
-    #print(f"---------- enable log file: {enable_file}")
+
     log_files = []
     if enable_file and (not isinstance(sys.stdout, Tee) or not isinstance(sys.stderr, Tee)):
         # 配置完全log文件，包括stdout、stderr
