@@ -18,3 +18,4 @@ _version.py
 nuitka-crash-report.xml
 /*.dist
 /*.build
+/backup
