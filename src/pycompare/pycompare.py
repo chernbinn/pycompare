@@ -57,7 +57,7 @@ def cli():
     # 设置初始窗口：位置 + 大小
     root.geometry(f"{initial_width}x{initial_height}+{x}+{y}")
     # --- 2. 设置最小尺寸，防止缩得太小 ---
-    root.minsize(800, 600)
+    root.minsize(400, 230)
     # --- 3. 允许窗口缩放（用户可手动调整或最大化）---
     root.resizable(True, True)
 
