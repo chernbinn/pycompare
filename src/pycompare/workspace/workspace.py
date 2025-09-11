@@ -7,11 +7,12 @@ from tkinterdnd2 import DND_FILES
 from pycompare.workspace.file_drop import FileDrop
 
 from pycompare.workspace.editor import Editor
-from pycompare.compare_core.compare_core import (
+#from pycompare.compare_core.compare_core import (
+# from pycompare.compare_core.core_no_numpy import (
+from pycompare.compare_core.core_qwen import (
     compare_files, MatcherConfig, mySequenceMatcher
 )
 from pycompare.workspace.events_queue import (
-    group_event_decorator,
     clear_event_queue
 )
 from pycompare.config import MERGE_TAG_LOG, JUNK_STR_PATTERN
