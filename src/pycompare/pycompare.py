@@ -43,9 +43,25 @@ def cli():
 
     root = TkinterDnD.Tk()
     root.title("文本对比工具")
-    root.state('zoomed')
-    app = Application(root)
+    # root.state('zoomed')
 
+    # --- 1. 设置初始窗口大小（适合拖拽）---
+    initial_width = 800
+    initial_height = 600
+    # 获取屏幕尺寸
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    # 计算居中位置
+    x = (screen_width - initial_width) // 2
+    y = (screen_height - initial_height) // 2
+    # 设置初始窗口：位置 + 大小
+    root.geometry(f"{initial_width}x{initial_height}+{x}+{y}")
+    # --- 2. 设置最小尺寸，防止缩得太小 ---
+    root.minsize(800, 600)
+    # --- 3. 允许窗口缩放（用户可手动调整或最大化）---
+    root.resizable(True, True)
+
+    app = Application(root)
     # 运行主循环
     root.mainloop()
 
