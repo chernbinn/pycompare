@@ -1,5 +1,5 @@
 
-import click
+#import click
 from tkinter import *
 from tkinter import ttk
 from tkinterdnd2 import TkinterDnD
@@ -35,9 +35,11 @@ class Application:
         statusbar = ttk.Label(self.root, relief=RAISED, borderwidth=1, textvariable=self.statusvar)
         statusbar.pack(side=BOTTOM, fill=X)
 
+"""
 @click.command()
 @click.help_option('-h', '--help')
 @click.version_option(version=__version__, prog_name='pycompare')
+"""
 def cli():
     #set_start_method('spawn', force=True)  # 解决Windows兼容性问题
 
