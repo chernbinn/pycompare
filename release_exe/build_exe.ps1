@@ -96,20 +96,40 @@ python -m nuitka `
   --standalone `
   --onefile `
   --onefile-no-dll `
-  --windows-console-mode=disable `
+  --windows-console-mode=attach `
+  --enable-plugin=implicit-imports `
   --enable-plugin=tk-inter `
-  --include-package=pycompare `
+  --enable-plugin=multiprocessing `
+  --enable-plugin=anti-bloat `
+  --enable-plugin=no-qt `
   --show-modules-output=dist/modules.txt `
+  --report=dist/report.xml `
+  --include-package=pycompare `
+  --nofollow-import-to=pycompare.compare_core.compare_core `
+  --nofollow-import-to=numpy `
+  --nofollow-import-to=unittest `
+  --nofollow-import-to=ipaddress `
+  --nofollow-import-to=mailcap `
+  --nofollow-import-to=smtplib `
+  --nofollow-import-to=ftplib `
+  --nofollow-import-to=imaplib `
+  --nofollow-import-to=poplib `
+  --nofollow-import-to=email `
+  --nofollow-import-to=webbrowser `
+  --nofollow-import-to=netrc `
+  --nofollow-import-to=ssl `
+  --nofollow-import-to=colorama `
   --nofollow-import-to=*.tests `
   --nofollow-import-to=*.test `
   --nofollow-import-to=*.testing `
   --nofollow-import-to=*.debug `
   --noinclude-pytest-mode=error `
-  --noinclude-setuptools-mode=error `
   --noinclude-unittest-mode=error `
+  --noinclude-setuptools-mode=error `
   --noinclude-IPython-mode=error `
   --noinclude-dask-mode=error `
   --noinclude-numba-mode=error `
+  --noinclude-pydoc-mode=error `
   --noinclude-data-files=*.pyc `
   --noinclude-data-files=*.pyo `
   --noinclude-data-files=*.txt `
@@ -118,6 +138,8 @@ python -m nuitka `
   --noinclude-data-files=*.html `
   --noinclude-data-files=*.log `
   --onefile-no-compression `
+  --onefile-as-archive `
+  --clean-cache=all `
   --cf-protection=none `
   --lto=yes `
   --jobs=4 `
@@ -130,7 +152,6 @@ python -m nuitka `
   --no-pyi-stubs `
   --no-pyi-file `
   --deployment `
-  --module-name-choice=original `
   --output-filename=$exe_name `
   --output-dir=dist `
   main.py
@@ -155,6 +176,11 @@ if ($LASTEXITCODE -eq 0) {
 # --mingw64 编译c\c++代码相对更优且更省控件；不使用该选项时，默认使用windows自带编译工具
 # --module-name-choice=original  不使用相对导入，使启动更快
 # --clean-cache=all不使用缓存
+# --onefile-as-archive 外部归档方式打包exe，即可解压
+# --onefile-no-compression 不压缩
+# --enable-plugin=implicit-imports 自动处理隐式导入的模块
+# --disable-plugin=implicit-imports 禁用自动处理隐式导入的模块
+# --show-modules-output=dist/modules.txt 记录导入的包，用于分析优化打包依赖
 
 #python -m nuitka `
 #  --standalone `                    # 启用独立打包
@@ -165,3 +191,4 @@ if ($LASTEXITCODE -eq 0) {
 #  --output-file="pycompare-gui-$ver.exe" `  # 使用版本号命名
 #  src/pycompare/pycompare.py
 #
+
