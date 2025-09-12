@@ -21,47 +21,6 @@ class Editor:
     class EditorEvent:
         # 定义事件处理函数
         @staticmethod
-        @group_event_decorator(event_type="paste", debounce_time=0, isbreak=True)
-        def on_paste(text_area, event, argsdict):
-            logger.debug("Paste事件触发")
-
-            try:
-                text_area.delete("sel.first", "sel.last")
-            except Exception as e:
-                logger.error(f"Exception: {e}")
-
-            current_index = text_area.index(INSERT)
-            logger.debug(f"start cursor index: {current_index}")
-            start_line = int(current_index.split('.')[0])
-
-            pasted_text = text_area.clipboard_get()
-            lines = pasted_text.splitlines()
-            #is_endnewl = pasted_text.endswith('\n')
-
-            newlines = len(lines)
-            #if is_endnewl: newlines += 1
-            linetags = set(text_area.tag_names(current_index))
-            insert_index = current_index
-            if 'invalidfilltext' in linetags:
-                try:
-                    start = str(text_area.tag_ranges('invalidfilltext')[0])
-                    #text_area.mark_set('insert', start)
-                    start_line = int(start.split('.')[0])
-                    insert_index = start
-                except Exception as e:
-                    logger.error(f"Exception: {e}")
-            text_area.insert(insert_index, pasted_text)
-
-            end_index = text_area.index(INSERT)
-            logger.debug(f"paste end index: {end_index}")
-
-            return {
-                'startline': start_line,
-                'endline': end_index.split('.')[0],
-                'newlines': newlines
-            }
-
-        @staticmethod
         @group_event_decorator(event_type="selection", debounce_time=0, isbreak=True)
         def on_selection(text_area, event, argsdict):
             if QUEUE_EVENT_LOG: logger.debug("Selection事件触发")
@@ -82,7 +41,7 @@ class Editor:
                 b_remove_selected_tag = start_index == end_index
                 
             except Exception as e:
-                logger.error(f"Exception: {e}")
+                #logger.error(f"Exception: {e}")
                 b_remove_selected_tag = True
 
             if b_remove_selected_tag:
@@ -90,57 +49,6 @@ class Editor:
                 event_data = None
 
             return event_data
-        
-        
-        @staticmethod
-        @group_event_decorator(event_type="KeyPress", debounce_time=0)
-        def on_key_press(text_area, event, argsdict):
-            logger.debug(f"KeyPress 事件触发")
-            logger.debug(f"event: {event}")
-            
-            cursor_index = text_area.index(INSERT)
-            if QUEUE_EVENT_LOG:
-                logger.debug(f"cursor_index: {cursor_index}")
-            # 获取按键的字符和键码
-            char = event.char
-            keysym = event.keysym
-            logger.debug(f"char: {repr(char)} keysym: {keysym}")
-            
-            # 定义方向键
-            direction_keys = {'Left', 'Right', 'Up', 'Down'}
-            
-            # 获取修饰键的状态
-            # 判断修饰键状态
-            shift_pressed = keysym in {'Shift_L', 'Shift_R'} or (event.state & 0x1) != 0  # Shift 键
-            ctrl_pressed = keysym in {'Control_L', 'Control_R'} or (event.state & 0x4) != 0  # Control 键
-            alt_pressed = keysym in {'Alt_L', 'Alt_R'} or (event.state & 0x8) != 0  # Alt 键
-
-            logger.debug(f"shift_pressed: {shift_pressed} ctrl_pressed: {ctrl_pressed} alt_pressed: {alt_pressed}")
-
-            invalidkey = any([
-                len(char) == 0,
-                shift_pressed or ctrl_pressed or alt_pressed,
-                shift_pressed and keysym in direction_keys,
-                ctrl_pressed and char in {'c', 'v', 'x'},
-                char in {'BackSpace', 'Delete'},
-            ])
-            logger.debug(f"invalidkey: {invalidkey}")
-            event_data = {
-                "invalidkey": invalidkey,
-                "keysym": keysym
-            }
-            return event_data
-
-        @staticmethod
-        def on_undo(text_area, e, argsdict):
-            logger.debug(f"undo 事件")
-            modified_count = text_area.__dict__.get('__modifiedCT', 0)
-            logger.debug(f"modified_count: {modified_count}")
-
-            if modified_count == 0:
-                return 'break'
-            modified_count -= 1
-            text_area.__dict__['__modifiedCT'] = modified_count
 
         @staticmethod
         def on_compare_end(text_area, event, argsdict):
@@ -229,76 +137,6 @@ class Editor:
                     f.write('\n'.join(rtags))
     
     # ---------- end EditorEvent --------------
-
-    class EditorHandler:
-        @staticmethod
-        def process_group_events(text_area, group, event_data, argsdict):
-            """处理事件组"""
-            text_area.tag_add('modified', '1.0', 'end')
-            tag_area = argsdict.get('tagarea')
-
-            handle_fucn = group.get('handle_func')
-            start = None
-            end = None
-            if handle_fucn != None:
-                cs_index, start, end = handle_fucn(text_area, event_data, tag_area)
-            else:
-                logger.info("不需要处理的事件")
-
-            if start != None and end != None:
-                text_area_tag_reset(text_area, None, start, end)
-                logger.debug(f"start: {start} end: {end}")
-                text_area.tag_add('newline', start, end)
-            
-            for area in [text_area, tag_area]:
-                modified_count = area.__dict__.get('__modifiedCT', 0)
-                area.__dict__['__modifiedCT'] = modified_count+1
-
-        @staticmethod
-        def handle_paste(text_area, events_data, tag_area):
-            """处理粘贴操作"""
-            #current_index = text_area.index(INSERT)
-            #logger.debug(f"cursor index: {current_index}")
-
-            newlines = events_data.get('editevent').get('newlines', 0)
-            logger.debug(f"newlines: {newlines}")    
-            if newlines == 0: return None, None, None
-
-            start_line = events_data.get('editevent').get('startline', 0)
-            #start_line = int(current_index.split('.')[0]) - difflines + 1
-            start_index = f"{start_line}.0"
-            
-            end_index = f"{events_data.get('editevent').get('endline', 0)}.end"
-            #end_index = f"{start_line+newlines-1}.end"
-            #end_index = current_index
-            logger.debug(f"start_index: {start_index} end_index: {end_index}")
-
-            return end_index, start_index, end_index
-
-        @staticmethod
-        def handle_input(text_area, events_data, tag_area):
-            """处理输入操作"""
-            logger.debug(f"**处理输入或粘贴操作**")
-            current_index = text_area.index(INSERT)
-            logger.debug(f"cursor index: {current_index}")
-
-            #prelines = text_area.__dict__.get('__endline', None)
-            #logger.debug(f"prelines: {prelines}")
-            start_line = int(current_index.split('.')[0])
-            start_index = f"{start_line}.0"
-            
-            end_index = current_index
-            logger.debug(f"start_index: {start_index} end_index: {end_index}")
-            
-            text_start = start_index
-            text_end = f"{int(end_index.split('.')[0])}.end"
-            logger.debug(f"text_start: {text_start} text_end: {text_end}")
-            """
-            if events_data.get('keysym', None) == "Return":
-                text_area.__dict__['__endline'] = prelines+1
-            """
-            return current_index, text_start, text_end    
-    # --------- end EditorHandler --------------
     @staticmethod
     def preload_filedialog(root, text_area):
         FileSelector.preload_file_dialog(root)
@@ -306,8 +144,8 @@ class Editor:
     @staticmethod
     def text_area_bind(text_area, argsdict):
         text_area.bind("<<Selection>>", lambda event: Editor.EditorEvent.on_selection(text_area, event, argsdict))
-        text_area.bind("<<Paste>>", lambda event: Editor.EditorEvent.on_paste(text_area, event, argsdict))
-        text_area.bind("<KeyPress>", lambda event: Editor.EditorEvent.on_key_press(text_area, event, argsdict))
+        #text_area.bind("<<Paste>>", lambda event: Editor.EditorEvent.on_paste(text_area, event, argsdict))
+        #text_area.bind("<KeyPress>", lambda event: Editor.EditorEvent.on_key_press(text_area, event, argsdict))
 
         # 自定义事件
         text_area.bind("<<compareend>>", lambda event: Editor.EditorEvent.on_compare_end(text_area, event, argsdict))
@@ -315,7 +153,7 @@ class Editor:
         # 鼠标事件
         text_area.bind("<Button-1>", lambda e: update_cursor_position(None, e, argsdict))
         # undo、redo事件
-        text_area.bind("<Control-z>", lambda e: Editor.EditorEvent.on_undo(text_area, e, argsdict))         # 撤销 (Ctrl + Z)
+        #text_area.bind("<Control-z>", lambda e: Editor.EditorEvent.on_undo(text_area, e, argsdict))         # 撤销 (Ctrl + Z)
         #text_area.bind("<Control-y>", lambda e: redo_event(text_area, e, argsdict))         # 重做 (Ctrl + Y)
         #text_area.bind("<Control-Shift-Z>", lambda e: redo_event(text_area, e, argsdict))   # 重做 (Ctrl + Shift + Z)
 
@@ -571,10 +409,10 @@ class Editor:
 
 # 定义事件组, editevent主要编辑事件，触发事件处理；required是必须事件；option是可选发生事件
 EVENT_GROUP = [
-    {"editevent": ["Modified"], "required": ["KeyPress"], "handle_func": Editor.EditorHandler.handle_input},
+    #{"editevent": ["Modified"], "required": ["KeyPress"], "handle_func": Editor.EditorHandler.handle_input},
     #{"editevent": [ 'Del', 'BackSpace'], "handle_func": None},
     #{"editevent": ['Cut'], "required": ["selection"], "handle_func": None},
-    {"editevent": ['paste'], "handle_func": Editor.EditorHandler.handle_paste},
+    #{"editevent": ['paste'], "handle_func": Editor.EditorHandler.handle_paste},
 ]
 # 以下两种编辑事件，在获取到粘贴的行数情况下，可以理解为粘贴即可，无需特殊处理
 #{"editevent": ['KeyPress'], "required": ["selection"], "handle_func": handle_replace},

@@ -16,9 +16,10 @@ def update_cursor_position(text, event, argsdict):
     # logger.debug(f"update_cursor_position 事件")
     text = event.widget
     if text == None or text.cget('state') == 'disabled': return
-
+    """ 正常功能，需求调整暂关闭
     tag_area = argsdict.get('tagarea')
     tag_area.tag_remove("selected_text", '1.0', 'end')
+    """
 
     try:
         # 获取光标位置(INSERT标记)
