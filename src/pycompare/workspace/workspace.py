@@ -27,188 +27,214 @@ class Workspace:
         self.root = root
         self.refresh_queue = queue.Queue()
         self.statusvar = statusvar
-        #++++++++++++++++++++++++++++
-        # 文件对比操作区
-        #++++++++++++++++++++++++++++        
-        workspace = Frame(root)
-        workspace.pack(side=TOP, fill=BOTH, expand=True)
-        openORsave = Frame(workspace)
-        openORsave.pack(side=TOP, fill=X)
-        text_frame = Frame(workspace)
-        text_frame.pack(side=TOP, fill=BOTH, expand=True)
-        
-        # 文件选择
-        l_path_var = StringVar()
-        l_pathbox = ttk.Combobox(openORsave, textvariable=l_path_var)
-        #l_pathbox['values'] = []
-        #l_pathbox.bind('<Return>', lambda *args: update_history(l_path_var, l_pathbox))
-        l_select_button = ttk.Button(openORsave, text="选择文件")
-        l_save_button = ttk.Button(openORsave, text="保存文件")
-        x_pos = 0
-        l_pathbox.grid(column=x_pos, row=0, pady=10, padx=5, sticky="we")
-        openORsave.columnconfigure(x_pos, weight=1)
-        x_pos += 1
-        l_select_button.grid(column=x_pos, row=0)
-        x_pos += 1
-        l_save_button.grid(column=x_pos, row=0)
-        x_pos += 1
-        
-        r_path_var = StringVar()
-        r_pathbox = ttk.Combobox(openORsave, textvariable=r_path_var)
-        #r_pathbox['values'] = []
-        #r_pathbox.bind('<Return>', lambda *args: update_history(r_path_var, r_pathbox))
-        r_select_button = ttk.Button(openORsave, text="选择文件")
-        r_save_button = ttk.Button(openORsave, text="保存文件")
-        r_pathbox.grid(column=x_pos, row=0, pady=10, padx=5, sticky="we")
-        openORsave.columnconfigure(x_pos, weight=1)
-        x_pos += 1
-        r_select_button.grid(column=x_pos, row=0)
-        x_pos += 1
-        r_save_button.grid(column=x_pos, row=0)
-        x_pos += 1
 
-        # 左侧文件显示区域
-        l_line_numbers = Text(text_frame, width=4, padx=5, takefocus=0, 
+        # 创建所有 UI 控件（保持不变）
+        self._create_ui_skeleton()
+
+        # 初始化 Editor 基础状态（轻量）
+        Editor.preload_filedialog(self.openORsave, self.l_text_area)
+        Editor.preload_filedialog(self.openORsave, self.r_text_area)
+
+        # 分阶段延迟初始化
+        self.root.after(0,   self._delay_bind_events)       # 尽快绑定事件
+        self.root.after(50,  self._delay_configure_tags)    # 稍后配置样式
+        self.root.after(100, self._delay_final_setup)       # 最终设置
+
+    def _create_ui_skeleton(self):
+        """仅创建控件和布局，不绑定复杂逻辑"""
+        self.workspace = Frame(self.root)
+        self.workspace.pack(side=TOP, fill=BOTH, expand=True)
+
+        self.openORsave = Frame(self.workspace)
+        self.openORsave.pack(side=TOP, fill=X)
+
+        self.text_frame = Frame(self.workspace)
+        self.text_frame.pack(side=TOP, fill=BOTH, expand=True)
+
+        # 左侧路径选择
+        self.l_path_var = StringVar()
+        self.l_pathbox = ttk.Combobox(self.openORsave, textvariable=self.l_path_var)
+        self.l_select_button = ttk.Button(self.openORsave, text="选择文件")
+        #self.l_save_button = ttk.Button(self.openORsave, text="保存文件")
+
+        # 右侧路径选择
+        self.r_path_var = StringVar()
+        self.r_pathbox = ttk.Combobox(self.openORsave, textvariable=self.r_path_var)
+        self.r_select_button = ttk.Button(self.openORsave, text="选择文件")
+        #self.r_save_button = ttk.Button(self.openORsave, text="保存文件")
+        
+        # 网格布局
+        self.x_pos = 0
+        self.l_pathbox.grid(column=self.x_pos, row=0, pady=10, padx=5, sticky="we")
+        self.openORsave.columnconfigure(self.x_pos, weight=1)
+        self.x_pos += 1
+        self.l_select_button.grid(column=self.x_pos, row=0)
+        self.x_pos += 1
+        #self.l_save_button.grid(column=self.x_pos, row=0)
+        #self.x_pos += 1
+        self.r_pathbox.grid(column=self.x_pos, row=0, pady=10, padx=5, sticky="we")
+        self.openORsave.columnconfigure(self.x_pos, weight=1)
+        self.x_pos += 1
+        self.r_select_button.grid(column=self.x_pos, row=0)
+        #self.x_pos += 1
+        #self.r_save_button.grid(column=self.x_pos, row=0)
+        #self.x_pos += 1
+
+        # 文本区域（先不配置 tags 或复杂 bind）
+        self.l_line_numbers = Text(self.text_frame, width=4, padx=5, takefocus=0,
                                 border=1, background='lightgrey', cursor='arrow')
-        l_line_numbers.grid(row=0, column=0, sticky=NS)
-        
-        lfl = Text(text_frame, width=6, padx=5, takefocus=0,
+        self.l_line_numbers.grid(row=0, column=0, sticky=NS)
+
+        self.lfl = Text(self.text_frame, width=6, padx=5, takefocus=0,
+                        border=1, background='lightgrey', cursor='arrow')
+        self.lfl.grid(row=0, column=1, sticky=NS)
+
+        self.l_text_area = Text(self.text_frame, wrap=NONE, undo=True, border=1)
+        self.l_text_area.grid(row=0, column=2, sticky=NSEW)
+
+        self.r_line_numbers = Text(self.text_frame, width=4, padx=5, takefocus=0,
                                 border=1, background='lightgrey', cursor='arrow')
-        lfl.grid(row=0, column=1, sticky=NS)
+        self.r_line_numbers.grid(row=0, column=4, sticky=NS)
 
-        l_text_area = Text(text_frame, wrap=NONE, undo=True, border=1)
-        l_text_area.grid(row=0, column=2, sticky=NSEW)
+        self.rfl = Text(self.text_frame, width=6, padx=5, takefocus=0,
+                        border=1, background='lightgrey', cursor='arrow')
+        self.rfl.grid(row=0, column=5, sticky=NS)
+
+        self.r_text_area = Text(self.text_frame, wrap=NONE, undo=True, border=1)
+        self.r_text_area.grid(row=0, column=6, sticky=NSEW)
+
+        # 滚动条（先注册，不立即绑定复杂命令）
+        self.scroll_ya = ttk.Scrollbar(self.text_frame, orient=VERTICAL)
+        self.scroll_ya.grid(row=0, column=3, sticky=NS)
+        self.scroll_yb = ttk.Scrollbar(self.text_frame, orient=VERTICAL)
+        self.scroll_yb.grid(row=0, column=7, sticky=NS)
+
+        self.scroll_xa = ttk.Scrollbar(self.text_frame, orient=HORIZONTAL)
+        self.scroll_xa.grid(row=1, column=2, sticky=EW)
+        self.scroll_xb = ttk.Scrollbar(self.text_frame, orient=HORIZONTAL)
+        self.scroll_xb.grid(row=1, column=6, sticky=EW)
+
+        # 配置网格权重
+        self.text_frame.grid_rowconfigure(0, weight=1)
+        self.text_frame.grid_columnconfigure(2, weight=1)
+        self.text_frame.grid_columnconfigure(6, weight=1)
         
-        # 右侧文件显示区域
-        r_line_numbers = Text(text_frame, width=4, padx=5, takefocus=0,
-                                border=1, background='lightgrey', cursor='arrow')
-        r_line_numbers.grid(row=0, column=4, sticky=NS)
+    def _delay_bind_events(self):
+        """绑定按钮、路径监听、拖放等基础交互"""
+        print("[Stage 2] Binding basic events...")
 
-        rfl = Text(text_frame, width=6, padx=5, takefocus=0, 
-                                border=1, background='lightgrey', cursor='arrow')
-        rfl.grid(row=0, column=5, sticky=NS)
+        # 同步滚动配置（必须在 Text 创建后设置）
+        self.scroll_ya.config(command=lambda *args: self.sync_scroll(
+            self.l_text_area, self.r_text_area, self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
+        self.scroll_yb.config(command=lambda *args: self.sync_scroll(
+            self.l_text_area, self.r_text_area, self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
 
-        r_text_area = Text(text_frame, wrap=NONE, undo=True, border=1)
-        r_text_area.grid(row=0, column=6, sticky=NSEW)
+        self.scroll_xa.config(command=lambda *args: self.sync_scroll_x(self.l_text_area, self.r_text_area, *args))
+        self.scroll_xb.config(command=lambda *args: self.sync_scroll_x(self.l_text_area, self.r_text_area, *args))
 
-        # 滚动配置
-        scroll_ya = ttk.Scrollbar(text_frame, orient=VERTICAL,
-                command=lambda *args:self.sync_scroll(
-                    l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        scroll_ya.grid(row=0, column=3, sticky=NS)
-        scroll_yb = ttk.Scrollbar(text_frame, orient=VERTICAL,
-                command=lambda *args: self.sync_scroll(
-                    l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        scroll_yb.grid(row=0, column=7, sticky=NS)
+        # yscrollcommand        
+        self.l_text_area.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))        
+        self.r_text_area.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))        
+        self.l_line_numbers.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
+        self.r_line_numbers.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
+        self.lfl.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
+        self.rfl.config(yscrollcommand=lambda *args: self.on_text_scroll(
+            self.scroll_ya, self.scroll_yb, self.l_text_area, self.r_text_area,
+            self.l_line_numbers, self.r_line_numbers, self.lfl, self.rfl, *args))
 
-        l_text_area.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb,
-                     l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        r_text_area.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb,
-                     l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        l_line_numbers.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb,
-                     l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        r_line_numbers.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb,
-                     l_text_area, r_text_area, l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        lfl.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb, l_text_area, r_text_area, 
-                        l_line_numbers, r_line_numbers, lfl, rfl, *args))
-        rfl.config(yscrollcommand=lambda *args:self.on_text_scroll(scroll_ya, scroll_yb, l_text_area,r_text_area, 
-                        l_line_numbers, r_line_numbers, lfl, rfl, *args))
+        # xscrollcommand
+        self.l_text_area.config(xscrollcommand=lambda *args: self.on_text_scroll_x(
+            self.scroll_xa, self.scroll_xb, self.l_text_area, self.r_text_area, *args))
+        self.r_text_area.config(xscrollcommand=lambda *args: self.on_text_scroll_x(
+            self.scroll_xa, self.scroll_xb, self.l_text_area, self.r_text_area, *args))
 
-        scroll_xa = ttk.Scrollbar(text_frame, orient=HORIZONTAL, 
-                command=lambda *args:self.sync_scroll_x(l_text_area, r_text_area, *args))
-        scroll_xa.grid(row=1, column=2, sticky=EW)
-        scroll_xb = ttk.Scrollbar(text_frame, orient=HORIZONTAL, 
-                command=lambda *args:self.sync_scroll_x(l_text_area, r_text_area, *args))
-        scroll_xb.grid(row=1, column=6, sticky=EW)
-        
-        l_text_area.config(xscrollcommand=lambda *args: self.on_text_scroll_x(
-            scroll_xa, scroll_xb, l_text_area, r_text_area, *args))
-        r_text_area.config(xscrollcommand=lambda *args: self.on_text_scroll_x(
-            scroll_xa, scroll_xb, l_text_area, r_text_area, *args))
+        # 文件选择按钮
+        self.l_select_button.bind('<Button-1>', lambda *e: Editor.select_file(self.l_path_var, self.openORsave))
+        self.r_select_button.bind('<Button-1>', lambda *e: Editor.select_file(self.r_path_var, self.openORsave))
+        # 保存文件按钮
+        #self.l_save_button.bind('<Button-1>', lambda *args: Editor.save_file(self.l_path_var, self.l_text_area))
+        #self.r_save_button.bind('<Button-1>', lambda *args: Editor.save_file(self.r_path_var, self.r_text_area))
 
-        # 配置网格布局
-        text_frame.grid_rowconfigure(0, weight=1)
-        text_frame.grid_columnconfigure(2, weight=1)
-        text_frame.grid_columnconfigure(6, weight=1)
-        # 文件对比操作区 end
+        # 路径变化监听
+        self.l_path_var.trace_add('write', lambda *args: Editor.load_file(
+            self.l_path_var, self.l_text_area, self.l_pathbox, self._make_l_args()))
+        self.r_path_var.trace_add('write', lambda *args: Editor.load_file(
+            self.r_path_var, self.r_text_area, self.r_pathbox, self._make_r_args()))
 
-        # 配置显示样式
-        Editor.configure_tags(l_text_area)
-        Editor.configure_tags(r_text_area)
+        # 拖放支持
+        self.l_text_area.drop_target_register(DND_FILES)
+        self.l_text_area.dnd_bind('<<Drop>>', lambda e: FileDrop(self.text_frame, self.l_text_area, self.l_path_var).on_drop(e))
+        self.r_text_area.drop_target_register(DND_FILES)
+        self.r_text_area.dnd_bind('<<Drop>>', lambda e: FileDrop(self.text_frame, self.r_text_area, self.r_path_var).on_drop(e))
 
-        # 绑定事件
-        l_args = {
-            'tagpathvar': r_path_var,
-            'tagarea': r_text_area, 
-            'textlines': l_line_numbers, 
-            'taglines': r_line_numbers,
-            'textflines': lfl,
-            'tagflines': rfl,
-            'modified': 'left'
-        }
-        l_select_button.bind('<Button-1>', lambda *args: Editor.select_file(l_path_var, openORsave))
-        l_path_var.trace_add('write', lambda *args: Editor.load_file(l_path_var, l_text_area, l_pathbox, l_args))
-        l_text_area.drop_target_register(DND_FILES)
-        l_text_area.dnd_bind('<<Drop>>', lambda event: FileDrop(text_frame, l_text_area, l_path_var).on_drop(event))
+        # 创建事件队列
+        self.l_text_area.__dict__['__eventqueue'] = queue.LifoQueue()
+        self.r_text_area.__dict__['__eventqueue'] = queue.LifoQueue()
 
-        r_args = {
-            'tagpathvar': l_path_var,
-            'tagarea': l_text_area, 
-            'textlines': r_line_numbers, 
-            'taglines': l_line_numbers,
-            'textflines': rfl,
-            'tagflines': lfl,
-            'modified': 'right'
-        }
-        r_select_button.bind('<Button-1>', lambda *args: Editor.select_file(r_path_var, openORsave))
-        r_path_var.trace_add('write', lambda *args: Editor.load_file(r_path_var, r_text_area, r_pathbox, r_args))
-        r_text_area.drop_target_register(DND_FILES)
-        r_text_area.dnd_bind('<<Drop>>', lambda event: FileDrop(text_frame, r_text_area, r_path_var).on_drop(event))
+        # 绑定文本区的编辑事件（可能触发 diff 计算）
+        args_left = self._make_l_args()
+        Editor.text_area_bind(self.l_text_area, args_left)
+        args_right = self._make_r_args()
+        Editor.text_area_bind(self.r_text_area, args_right)
 
-        l_save_button.bind('<Button-1>', lambda *args: Editor.save_file(l_path_var, l_text_area))
-        r_save_button.bind('<Button-1>', lambda *args: Editor.save_file(r_path_var, r_text_area))
-        
-        argsdict = {
-            'tagarea': r_text_area, 
-            'textlines': l_line_numbers,
-            'taglines': r_line_numbers,
-            'textflines': lfl,
-            'tagflines': rfl,
-            'statusbar': self.statusvar,
-            'modified': 'left'
-        }
-        Editor.text_area_bind(l_text_area, argsdict)
-        argsdict = {
-            'tagarea': l_text_area, 
-            'textlines': r_line_numbers,
-            'taglines': l_line_numbers,
-            'textflines': rfl,
-            'tagflines': lfl,
-            'statusbar': self.statusvar,
-            'modified': 'right'
-        }
-        Editor.text_area_bind(r_text_area, argsdict)
-        l_text_area.__dict__['__eventqueue'] = queue.LifoQueue()
-        r_text_area.__dict__['__eventqueue'] = queue.LifoQueue()
+    def _delay_configure_tags(self):
+        """配置高亮标签、复杂绑定"""
+        print("[Stage 3] Configuring syntax tags...")
+        Editor.configure_tags(self.l_text_area)
+        Editor.configure_tags(self.r_text_area)        
 
-        argsdict = {
-            'textarea': l_text_area,
-            'tagarea': r_text_area, 
-            'textlines': l_line_numbers,
-            'taglines': r_line_numbers,
-            'textflines': lfl,
-            'tagflines': rfl,
-            'workspace': self
-        }
-        l_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
-        r_text_area.bind('<F5>', lambda event: self.refresh_compare_F5(None, event, argsdict))
+    def _delay_final_setup(self):
+        """最后绑定 F5 和保存状态"""
+        print("[Stage 4] Final setup (F5, argsdict)...")
+
+        argsdict = self._make_l_args()
+        argsdict.update({'workspace': self})
+
+        self.l_text_area.bind('<F5>', lambda e: self.refresh_compare_F5(None, e, argsdict))
+        self.r_text_area.bind('<F5>', lambda e: self.refresh_compare_F5(None, e, argsdict))
 
         self.__dict__['__argsdict'] = argsdict
-        Editor.initialize(openORsave, l_text_area)
-        Editor.initialize(openORsave, r_text_area)
 
-    @staticmethod
-    def sync_scroll(text_a, text_b, line_num_a, line_num_b, fl_a, fl_b, *args):
+        # 可选：显示欢迎信息或最近文件
+        self.statusvar.set("就绪。拖放文件开始对比。")
+
+    def _make_l_args(self):
+        return {
+            'tagpathvar': self.r_path_var,
+            'textarea': self.l_text_area,
+            'tagarea': self.r_text_area,
+            'textlines': self.l_line_numbers,
+            'taglines': self.r_line_numbers,
+            'textflines': self.lfl,
+            'tagflines': self.rfl,
+            'statusbar': self.statusvar,
+            'modified': 'left'
+        }
+
+    def _make_r_args(self):
+        return {
+            'tagpathvar': self.l_path_var,
+            'textarea': self.r_text_area,
+            'tagarea': self.l_text_area,
+            'textlines': self.r_line_numbers,
+            'taglines': self.l_line_numbers,
+            'textflines': self.rfl,
+            'tagflines': self.lfl,
+            'statusbar': self.statusvar,
+            'modified': 'right'
+        }
+
+    def sync_scroll(self, text_a, text_b, line_num_a, line_num_b, fl_a, fl_b, *args):
             """同步滚动两个Text组件"""
             text_a.yview(*args)
             text_b.yview(*args)
@@ -217,25 +243,23 @@ class Workspace:
             fl_a.yview(*args)
             fl_b.yview(*args)
 
-    @staticmethod
-    def on_text_scroll(scroll_ya, scroll_yb, text_a, text_b, line_num_a, line_num_b, fla, flb, *args):
+    def on_text_scroll(self, scroll_ya, scroll_yb, text_a, text_b, line_num_a, line_num_b, fla, flb, *args):
         """当Text组件滚动时调用此方法来更新滚动条的位置"""
+        logger.debug(f"on_text_scroll args: {args}")
         scroll_ya.set(*args)
         scroll_yb.set(*args)
-        Workspace.sync_scroll(text_a, text_b, line_num_a, line_num_b, fla, flb, 'moveto', args[0])
+        self.sync_scroll(text_a, text_b, line_num_a, line_num_b, fla, flb, 'moveto', args[0])
     
-    @staticmethod
-    def sync_scroll_x(text_a, text_b, *args):
+    def sync_scroll_x(self, text_a, text_b, *args):
         """同步滚动两个Text组件"""
         text_a.xview(*args)
         text_b.xview(*args)
 
-    @staticmethod
-    def on_text_scroll_x(scroll_xa, scroll_xb, text_a, text_b, *args):
+    def on_text_scroll_x(self, scroll_xa, scroll_xb, text_a, text_b, *args):
         """当Text组件滚动时调用此方法来更新滚动条的位置"""
         scroll_xa.set(*args)
         scroll_xb.set(*args)
-        Workspace.sync_scroll_x(text_a, text_b, 'moveto', args[0])
+        self.sync_scroll_x(text_a, text_b, 'moveto', args[0])
 
     @staticmethod
     def create_fileline_handler(lfl=None, rfl=None, start: int = 1):

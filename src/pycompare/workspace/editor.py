@@ -300,7 +300,7 @@ class Editor:
             return current_index, text_start, text_end    
     # --------- end EditorHandler --------------
     @staticmethod
-    def initialize(root, text_area):
+    def preload_filedialog(root, text_area):
         FileSelector.preload_file_dialog(root)
 
     @staticmethod
