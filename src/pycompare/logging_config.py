@@ -38,13 +38,13 @@ def is_development_mode():
             #print("__editable__")
             return True
 
-        # 如果找到了 ownpygit 目录，则说明是正常安装（非开发模式）
+        # 如果找到了 包名 目录，则说明是正常安装（非开发模式）
         if (path / f"{package_name}").exists():
-            #print("ownpygit")
             return False
 
-    return True
+    return None
 
+_IS_DEV_MODE = is_development_mode()
 # 需要开发者主动配置,可以是相对路径，也可以是绝对路径（相对于当前文件logging_config.py的路径）
 _config_path = Path.home() / "pycompare" / "logging.json"
 _log_path = None
@@ -67,7 +67,7 @@ if is_development_mode():
 """
 
 _DEFAULT_CONFIG = {
-    "app_name": "myagent",
+    "app_name": "pycompare",
     "release": True,
     "release_log_level": logging.INFO,  # release版本默认使用INFO级别，开发版本各模块使用各自的级别
     "file_logging": {
@@ -98,18 +98,21 @@ def _load_config():
         _config_path = config_path
         # 如果找到配置文件则加载，否则使用默认配置
         if os.path.exists(config_path):
-            print(f"-------- load logging config from: {config_path} --------")
+            #print(f"-------- load logging config from: {config_path} --------")
             with open(config_path, 'r') as f:
                 _current_config = {**_DEFAULT_CONFIG, **json.load(f)}
             return True
     except Exception as e:
-        print(f"加载日志配置文件失败: {e}, 使用默认配置")
+        if _IS_DEV_MODE is not None:
+            print(f"加载日志配置文件失败: {e}, 使用默认配置")
+        pass
 
-    print(f"""\033[93m
-    未找到日志配置文件，使用默认配置。如果需要自定义配置，请在项目根目录下创建logging.json文件,
-    且在logging_config.py中初始化logging.json路径。
-    \033[0m""")
-    
+    if _IS_DEV_MODE is not None:
+        print(f"""\033[93m
+        未找到日志配置文件，使用默认配置。如果需要自定义配置，请在项目根目录下创建logging.json文件,
+        且在logging_config.py中初始化logging.json路径。
+        \033[0m""")
+
     _current_config = _DEFAULT_CONFIG.copy()
     return False
 
@@ -133,7 +136,6 @@ class FileManager:
             if path not in self._open_regular_files:
                 self._prepare_directory(path)
                 try:
-                    print(f"-------- open regular file: {path} --------")
                     self._open_regular_files[path] = open(path, mode, encoding="utf-8")
                 except (IOError, OSError) as e:
                     sys.stderr.write(f"Failed to open file {path}: {str(e)}\n")
@@ -150,7 +152,6 @@ class FileManager:
         """获取RotatingFileHandler"""
         with self._lock:            
             if path not in self._open_rotating_handlers:
-                print(f"-------- open rotation file: {path}")
                 self._prepare_directory(path)
                 handler = RotatingFileHandler(
                     filename=path,
@@ -169,7 +170,6 @@ class FileManager:
             os.makedirs(dirname, exist_ok=True)
     
     def close_all(self):
-        print("-------- close all log files --------")
         with self._lock:
             for path, file in self._open_regular_files.items():
                 try:
@@ -326,14 +326,20 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
     effective_log_level = _current_config["release_log_level"] if _current_config["release"] else log_level
     global_log_level = _current_config["release_log_level"] if _current_config["release"] else logging.DEBUG
     app_name = f"{_current_config['app_name']}_{'release' if _current_config['release'] else 'debug'}"
-    log_path = _current_config.get('file_logging', {}).get('log_path', _log_path)
-    #print(f"log_path: {log_path}")
-    log_path = Path(log_path).resolve()
-    #print(f"--log_path: {log_path}")
-    
+
+    log_path = _current_config.get('file_logging', {}).get('log_path', _log_path)  
     enable_file = True if _current_config.get("file_logging", {}).get("enabled") else False
     if not log_path:
         enable_file = False
+    else:
+        log_path = Path(log_path).resolve()
+
+    if _IS_DEV_MODE is None:
+        logger = logging.getLogger()
+        handler = logging.NullHandler()
+        logger.addHandler(handler)
+        return logger
+
     # 获取调用模块名称
     module_name = log_tag
     if not log_tag:
@@ -350,7 +356,7 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
         handler.close()
     formatter = logging.Formatter(
         _current_config["log_format"] if _current_config.get("log_format", None) else
-        '%(asctime)s-%(funcName)s:%(lineno)d-%(levelname)s-[%(name)s]: %(message)s'
+            '%(asctime)s-%(funcName)s:%(lineno)d-%(levelname)s-[%(name)s]: %(message)s'
     )
 
     log_files = []

@@ -61,7 +61,8 @@ class FileSelector:
 
             except Exception as e:
                 # 防止对话框异常影响主流程
-                print(f"文件选择失败: {e}")
+                #logger.error(f"文件选择失败: {e}")
+                pass
 
         # ✅ 使用 after 调度，让当前事件循环先完成，避免卡顿
         if root:

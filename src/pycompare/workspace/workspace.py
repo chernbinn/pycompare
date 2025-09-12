@@ -121,7 +121,7 @@ class Workspace:
         
     def _delay_bind_events(self):
         """绑定按钮、路径监听、拖放等基础交互"""
-        print("[Stage 2] Binding basic events...")
+        logger.debug("[Stage 2] Binding basic events...")
 
         # 同步滚动配置（必须在 Text 创建后设置）
         self.scroll_ya.config(command=lambda *args: self.sync_scroll(
@@ -189,13 +189,13 @@ class Workspace:
 
     def _delay_configure_tags(self):
         """配置高亮标签、复杂绑定"""
-        print("[Stage 3] Configuring syntax tags...")
+        logger.debug("[Stage 3] Configuring syntax tags...")
         Editor.configure_tags(self.l_text_area)
         Editor.configure_tags(self.r_text_area)        
 
     def _delay_final_setup(self):
         """最后绑定 F5 和保存状态"""
-        print("[Stage 4] Final setup (F5, argsdict)...")
+        logger.debug("[Stage 4] Final setup (F5, argsdict)...")
 
         argsdict = self._make_l_args()
         argsdict.update({'workspace': self})
