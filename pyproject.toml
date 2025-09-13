@@ -10,8 +10,8 @@ name = "pycompare-gui"
 dynamic = ["version"]  # 声明动态版本
 description = "文本对比工具"
 readme = "README.md"
-license = "GPL3.0"
-#repository = "https://gitee.com/binnchern/cmdbox"
+license = "GPL-3.0"
+
 dependencies = [
     "click>=8.2.1",
     "numpy>=2.3.2",
