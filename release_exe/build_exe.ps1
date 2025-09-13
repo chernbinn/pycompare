@@ -96,6 +96,7 @@ python -m nuitka `
   --standalone `
   --onefile `
   --onefile-no-dll `
+  --windows-icon-from-ico=logo.ico `
   --windows-console-mode=attach `
   --enable-plugin=implicit-imports `
   --enable-plugin=tk-inter `
