@@ -13,7 +13,12 @@ function Clean-Folder {
     if ($FolderPath -like "*.build" -or $FolderPath -like "*.dist" -or $FolderPath -like "*.onefile-build") {
         $items = Get-ChildItem -Path . -Filter $FolderPath -Directory -ErrorAction SilentlyContinue
     } else {
-        $items = Get-ChildItem -Path $FolderPath -ErrorAction SilentlyContinue | Where-Object { $_.PSProvider.Name -eq "FileSystem" }
+        # $items = Get-ChildItem -Path $FolderPath -ErrorAction SilentlyContinue | Where-Object { $_.PSProvider.Name -eq "FileSystem" }
+        # 获取路径本身（文件或目录）
+        $item = Get-Item -Path $FolderPath -ErrorAction SilentlyContinue
+        if ($item -and $item.PSProvider.Name -eq "FileSystem") {
+            $items = $item
+        }
     }
 
     if ($items) {
