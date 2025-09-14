@@ -71,6 +71,10 @@ Write-Host "Building pycompare $ver ..." -ForegroundColor Green
 # === 清理旧文件 ===
 # 清理临时构建目录
 Clean-Temp
+$dir = "dist"
+if (-not (Test-Path $dir)) {
+    New-Item -ItemType Directory -Path $dir
+}
 
 # === 创建入口文件 ===
 if (-not (Test-Path "main.py")) {
@@ -97,14 +101,15 @@ python -m nuitka `
   --onefile `
   --onefile-no-dll `
   --windows-icon-from-ico=logo.ico `
-  --windows-console-mode=attach `
+  --windows-console-mode=disable `
+  --output-dir=dist `
+  --show-modules-output=dist/modules.txt `
+  --report=dist/report.xml `
   --enable-plugin=implicit-imports `
   --enable-plugin=tk-inter `
   --enable-plugin=multiprocessing `
   --enable-plugin=anti-bloat `
   --enable-plugin=no-qt `
-  --show-modules-output=dist/modules.txt `
-  --report=dist/report.xml `
   --include-package=pycompare `
   --nofollow-import-to=pycompare.compare_core.compare_core `
   --nofollow-import-to=numpy `
@@ -154,7 +159,6 @@ python -m nuitka `
   --no-pyi-file `
   --deployment `
   --output-filename=$exe_name `
-  --output-dir=dist `
   main.py
 #upx --best --lzma --compress-icons=0 --compress-exports=1 -9 $exe_name
 upx --ultra-brute --lzma --compress-icons=0 --compress-exports=1 dist/$exe_name -o dist/$opt_exe_name
