@@ -27,4 +27,3 @@ PyCompare 是一个基于 Python 和 Tkinter 的文本对比工具，主要功�
 ## 赞助
 
 - [爱发电：https://afdian.com/a/binn123456](https://afdian.com/a/binn123456)
-
