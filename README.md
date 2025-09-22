@@ -1,4 +1,6 @@
-# PyCompare 文本对比工具文档
+# PyCompare 
+
+文本内容对比工具，参照Beyond Compare 4 版本实现，该软件仅支持windows下文本内容对比，不支持动态合并对比。
 
 ## 功能概述
 PyCompare 是一个基于 Python 和 Tkinter 的文本对比工具，主要功能包括：
