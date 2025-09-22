@@ -206,7 +206,7 @@ class Workspace:
         self.__dict__['__argsdict'] = argsdict
 
         # 可选：显示欢迎信息或最近文件
-        self.statusvar.set("就绪。拖放文件开始对比。")
+        self.statusvar.set("就绪。拖放文件，点击刷新开始对比。")
 
     def _make_l_args(self):
         return {
