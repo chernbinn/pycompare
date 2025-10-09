@@ -101,6 +101,7 @@ python -m nuitka --clean-cache=all
 $now = Get-Date -Format "yyyyMMddHHmmss"
 $exe_name = "pycompare-gui-$ver-$now.exe"
 $opt_exe_name = "pycompare-gui-$ver-$now-opt.exe"
+Write-Host "Building $exe_name ..." -ForegroundColor Green
 python -m nuitka `
   --standalone `
   --onefile `
