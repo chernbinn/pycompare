@@ -37,7 +37,7 @@ pycompare-gui = "pycompare.pycompare:cli"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = [
-    "pycompare"
+    "pycompare*"
 ]
 
 [tool.setuptools-git-versioning]
