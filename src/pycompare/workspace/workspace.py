@@ -245,7 +245,7 @@ class Workspace:
 
     def on_text_scroll(self, scroll_ya, scroll_yb, text_a, text_b, line_num_a, line_num_b, fla, flb, *args):
         """当Text组件滚动时调用此方法来更新滚动条的位置"""
-        logger.debug(f"on_text_scroll args: {args}")
+        #logger.debug(f"on_text_scroll args: {args}")
         scroll_ya.set(*args)
         scroll_yb.set(*args)
         self.sync_scroll(text_a, text_b, line_num_a, line_num_b, fla, flb, 'moveto', args[0])
@@ -597,7 +597,7 @@ class Workspace:
         text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl = \
             result['data']['widgets']
 
-        # 回复子空间光标
+        # 恢复子空间光标
         for widget in [text_area, tag_area]:
             widget.config(cursor="")
         self.root.update_idletasks()
