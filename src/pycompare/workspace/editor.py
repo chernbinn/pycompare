@@ -218,8 +218,8 @@ class Editor:
             #logger.debug(f"{i} line_tags: {line_tags} {repr(line)}")
             #logger.debug(f"set(TEXT_CONTENT_TAG)&line_tags): {set(TEXT_CONTENT_TAG)&line_tags}")
             edittags = TEXT_CONTENT_TAG&line_tags
-            if 'invalidfilltext' in edittags and len(edittags) == 1: break
 
+            #logger.debug(f"line {i} content: {repr(line)} len: {len(line)}")
             if "spacesimage" not in line_tags and "invalidfilltext" not in line_tags:
                 lct = f"{line}\n"
             elif len(line)>0 and ("spacesimage" in line_tags or "invalidfilltext" in line_tags):
@@ -227,6 +227,7 @@ class Editor:
             #logger.debug(f"{repr(lct)}")
             if lct != None:
                 content.append(lct)
+            if 'invalidfilltext' in edittags and len(edittags) == 1: break
         
         """
         line_tags = set(text_area.tag_names(f"{end}.0")+text_area.tag_names(f"{end}.end"))
@@ -235,6 +236,7 @@ class Editor:
         if len(line) > 0:
             content.append(f"{line}")
         """
+        # logger.debug(f"get_area, content: {content}")
         return content
 
     @staticmethod
