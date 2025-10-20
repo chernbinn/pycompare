@@ -1,12 +1,12 @@
 
 #import click
-from tkinter import *
-from tkinter import ttk
+import tkinter as tk
+from tkinter import StringVar
+from tkinter import ttk, messagebox, Menu, RAISED, BOTTOM, X
 from tkinterdnd2 import TkinterDnD
-from tkinter import messagebox
 from pycompare.workspace.workspace import Workspace
-
 from pycompare._version import __version__
+from pycompare.search_dialog import SearchDialog
 
 class Application:
     def __init__(self, root):
@@ -15,19 +15,38 @@ class Application:
         self.menu()
         self.workspace = Workspace(root, self.statusvar)
         self.status_bar()
+        # 保存搜索对话框实例
+        self.search_dialog = None
 
     def about(self):
         messagebox.showinfo("关于", "文本对比工具\n版本：" + __version__)
+        
+    def search(self):
+        """打开搜索对话框"""
+        if self.search_dialog is None or not self.search_dialog.dialog.winfo_exists():
+            self.search_dialog = SearchDialog(self.root, self.workspace)
+        else:
+            # 如果对话框已存在，将其置于前台
+            self.search_dialog.dialog.lift()
+            self.search_dialog.search_entry.focus_set()
 
     def menu(self):
         main_menu = Menu(self.root)
         self.root.config(menu=main_menu)
 
+        # 添加编辑菜单
+        edit_menu = Menu(main_menu, tearoff=0)
+        edit_menu.add_command(label="查找...(Ctrl+F)", command=self.search)
+        main_menu.add_cascade(label="编辑", menu=edit_menu)
+        
         main_menu.add_command(label="刷新(F5)",
             command=lambda:self.workspace.refresh_compare_F5(None, None, self.workspace.__dict__['__argsdict']))
         # 全局处理快捷键F5
         self.root.bind('<F5>', lambda event: self.workspace.refresh_compare_F5(None, None, self.workspace.__dict__['__argsdict']))
-
+        
+        # 绑定Ctrl+F快捷键
+        self.root.bind('<Control-f>', lambda event: self.search())
+        
         main_menu.add_command(label="关于",
             command=lambda:self.about())
 
