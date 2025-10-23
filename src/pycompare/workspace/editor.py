@@ -51,6 +51,60 @@ class Editor:
             return event_data
 
         @staticmethod
+        def on_copy(event, text_area):
+            """处理复制操作，对内容进行过滤后放入剪贴板"""
+            if QUEUE_EVENT_LOG: logger.debug("Copy事件触发")
+            try:
+                # 获取选中的文本范围
+                start_index = text_area.index("sel.first")
+                end_index = text_area.index("sel.last")
+                
+                # 过滤文本内容 - 移除不需要的字符或标签相关内容
+                # filtered_text = Editor._filter_text_for_clipboard(text_area, start_index, end_index)
+                filtered_text = Editor.get_area(text_area, start_index, end_index)
+                filtered_text = "".join(filtered_text)
+                #logger.debug(f"filtered_text:\n {filtered_text}")
+                
+                # 将过滤后的文本放入剪贴板
+                text_area.clipboard_clear()
+                text_area.clipboard_append(filtered_text)
+                
+                # 阻止默认的复制行为
+                return "break"
+            except Exception as e:
+                logger.error(f"复制操作失败: {e}")
+                # 如果出错，让默认的复制行为继续
+                return None
+
+        @staticmethod
+        def on_cut(event, text_area):
+            """处理剪切操作，对内容进行过滤后放入剪贴板并删除原内容"""
+            if QUEUE_EVENT_LOG: logger.debug("Cut事件触发")
+            try:
+                # 获取选中的文本范围
+                start_index = text_area.index("sel.first")
+                end_index = text_area.index("sel.last")
+                
+                # 过滤文本内容
+                # filtered_text = Editor._filter_text_for_clipboard(text_area, start_index, end_index)
+                filtered_text = Editor.get_area(text_area, start_index, end_index)
+                filtered_text = "".join(filtered_text)
+
+                # 将过滤后的文本放入剪贴板
+                text_area.clipboard_clear()
+                text_area.clipboard_append(filtered_text)
+                
+                # 删除选中的内容
+                text_area.delete(start_index, end_index)
+                
+                # 阻止默认的剪切行为
+                return "break"
+            except Exception as e:
+                logger.error(f"剪切操作失败: {e}")
+                # 如果出错，让默认的剪切行为继续
+                return None
+
+        @staticmethod
         def on_compare_end(text_area, event, argsdict):
             logger.debug(f"compareend 事件触发")
 
@@ -144,6 +198,9 @@ class Editor:
     @staticmethod
     def text_area_bind(text_area, argsdict):
         text_area.bind("<<Selection>>", lambda event: Editor.EditorEvent.on_selection(text_area, event, argsdict))
+        # 绑定复制和剪切事件
+        text_area.bind("<<Copy>>", lambda event: Editor.EditorEvent.on_copy(event, text_area))
+        text_area.bind("<<Cut>>", lambda event: Editor.EditorEvent.on_cut(event, text_area))
         #text_area.bind("<<Paste>>", lambda event: Editor.EditorEvent.on_paste(text_area, event, argsdict))
         #text_area.bind("<KeyPress>", lambda event: Editor.EditorEvent.on_key_press(text_area, event, argsdict))
 
@@ -198,17 +255,24 @@ class Editor:
         line_numbers.config(state='disabled')
 
     @staticmethod
-    def get_area(text_area, strstart='1.0', strend='end-1c'):
+    def get_area(text_area, strstart='1.0', strend='end-1c') -> list[str]:
         content = []
         
         start = text_area.index(strstart)
         end = text_area.index(strend)
+
+        #logger.debug(f"get_area, strstart: {strstart} strend: {strend}")
+        #logger.debug(f"start char: {start.split('.')[1]}")
+        #logger.debug(f"end char: {end.split('.')[1]}")
     
         if GET_AREA_LOG:
             logger.debug(f"get_area, start: {start} end: {end}")
         
+        start_c = int(start.split('.')[1])
+        end_c = int(end.split('.')[1])
+
         start = int(start.split('.')[0])
-        end = int(end.split('.')[0])
+        end = int(end.split('.')[0])        
 
         for i in range(start, end+1):
             lct = None
@@ -226,6 +290,12 @@ class Editor:
                 lct = f"{line}"
             #logger.debug(f"{repr(lct)}")
             if lct != None:
+                if i == start and i == end:
+                    lct = lct[start_c:end_c]
+                elif i == start:
+                    lct = lct[start_c:]
+                elif i == end:
+                    lct = lct[:end_c]
                 content.append(lct)
             if 'invalidfilltext' in edittags and len(edittags) == 1: break
         
@@ -236,7 +306,7 @@ class Editor:
         if len(line) > 0:
             content.append(f"{line}")
         """
-        # logger.debug(f"get_area, content: {content}")
+        #logger.debug(f"get_area, content:\n {content}")
         return content
 
     @staticmethod
