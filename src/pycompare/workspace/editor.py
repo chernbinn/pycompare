@@ -41,7 +41,9 @@ class Editor:
                     logger.debug(f"选中的文本: '{selected_text}'")
                 
                 text_area.tag_remove("selected_text", '1.0', 'end')
+                text_area.tag_remove("selected_text_foreground", '1.0', 'end')
                 text_area.tag_add("selected_text", start_index, end_index)
+                text_area.tag_add("selected_text_foreground", start_index, end_index)
                 
                 event_data = { }
                 b_remove_selected_tag = start_index == end_index
@@ -339,13 +341,20 @@ class Editor:
             'textcontent': {'background': "lightblue", 'foreground': 'red'},  # 红色字体
             'somematch': {'background': 'lightyellow'}, 
             'linediffer': {'foreground': 'red'},  # 红色字体
-            'selected_text': {'background': 'cornflowerblue', 'foreground': 'black'}, # 被选中内容的背景色和字体颜色
+            'selected_text': {'background': 'skyblue'}, # 只设置背景色，不设置前景色
+            'selected_text_foreground': {'foreground': 'black'}, # 单独设置选中文字的前景色为黑色
             'invalidfilltext' : {'background': 'grey'},
         }
 
         # 使用 tag_configure 配置每个标签的样式
         for tag, style in tags_and_styles.items():
             text_area.tag_configure(tag, **style)
+        
+        # 配置内置的sel标签，只设置背景色，不设置前景色，以保持原有文字颜色
+        text_area.tag_configure("sel", background="cornflowerblue")
+        text_area.tag_raise("textcontent")
+        text_area.tag_raise("linediffer")
+        text_area.tag_raise("selected_text")
 
     @staticmethod
     def update_line_numbers(text_area, left_line_numbers, right_line_numbers):
