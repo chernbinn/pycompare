@@ -339,7 +339,7 @@ class Editor:
             'textcontent': {'background': "lightblue", 'foreground': 'red'},  # 红色字体
             'somematch': {'background': 'lightyellow'}, 
             'linediffer': {'foreground': 'red'},  # 红色字体
-            'selected_text': {'background': 'lightblue', 'foreground': 'black'}, # 被选中内容的背景色和字体颜色
+            'selected_text': {'background': 'cornflowerblue', 'foreground': 'black'}, # 被选中内容的背景色和字体颜色
             'invalidfilltext' : {'background': 'grey'},
         }
 
