@@ -43,7 +43,9 @@ def debounce(wait, isbreak=False):
             if wait == 0 or not text_area:
                 if QUEUE_EVENT_LOG: logger.debug("exec right now!")
                 func(text_area, event, *args)
-                if isbreak: return 'break'
+                if isbreak: 
+                    logger.debug("isbreak=True, return 'break'")
+                    return "break"
                 else: return
             # 获取事件或编辑区的唯一标识
             event_key = (event.widget, func.__name__) if event else func.__name__
@@ -56,7 +58,9 @@ def debounce(wait, isbreak=False):
 
             # 设置新的定时器
             wrapper._timers[event_key] = root.after(wait, func, text_area, event, *args)
-            if isbreak: return 'break'
+            if isbreak: 
+                logger.debug("timer isbreak=True, return 'break'")
+                return "break"
 
         # 初始化 _timers 字典
         if not hasattr(wrapper, '_timers'):

@@ -21,13 +21,19 @@ class Editor:
     class EditorEvent:
         # 定义事件处理函数
         @staticmethod
-        @group_event_decorator(event_type="selection", debounce_time=0, isbreak=True)
+        # @group_event_decorator(event_type="selection", debounce_time=0, isbreak=True)
         def on_selection(text_area, event, argsdict):
             if QUEUE_EVENT_LOG: logger.debug("Selection事件触发")
             b_remove_selected_tag = False
             try:
                 start_index = text_area.index("sel.first")
                 end_index = text_area.index("sel.last")
+                if end_index == text_area.index("end"):
+                    logger.debug(f"end_index: {end_index} equal end")
+                    end_index = text_area.index("end-2 lines lineend")
+                    # 移除默认选中的默认颜色标记
+                    text_area.tag_remove("sel", end_index, "end")
+
                 if QUEUE_EVENT_LOG:
                     selected_text = text_area.get("sel.first", "sel.last")
                     length = len(selected_text)
@@ -48,7 +54,9 @@ class Editor:
                 text_area.tag_remove("selected_text", '1.0', 'end')
                 event_data = None
 
-            return event_data
+            # 如果使用group_event_decorator，需要返回event_data
+            #return event_data
+            return "break"
 
         @staticmethod
         def on_copy(event, text_area):
@@ -62,6 +70,7 @@ class Editor:
                 # 过滤文本内容 - 移除不需要的字符或标签相关内容
                 # filtered_text = Editor._filter_text_for_clipboard(text_area, start_index, end_index)
                 filtered_text = Editor.get_area(text_area, start_index, end_index)
+                #logger.debug(f"filtered_text lists:\n {filtered_text}")
                 filtered_text = "".join(filtered_text)
                 #logger.debug(f"filtered_text:\n {filtered_text}")
                 
@@ -146,14 +155,15 @@ class Editor:
             
             logger.debug(f"maxline: {maxline} minline: {minline}")
         
-            for i in range(minline, maxline):
-                for v, maxl in zip(vs, ls):
+            for v, maxl in zip(vs, ls):
+                prestate = v.cget('state')
+                if prestate == 'disabled':
+                    v.config(state='normal')
+                for i in range(minline, maxline):
                     if i >= maxl:
-                        prestate = v.cget('state')
-                        if prestate == 'disabled':
-                            v.config(state='normal')
+                        #logger.debug(f"i: {i} maxl: {maxl}")
                         v.insert('end', '\n', 'invalidfilltext')
-                        v.config(state=prestate)
+                v.config(state=prestate)
             
             logger.debug("----------------")
             logger.debug(f"on_compare_end--l_text_area.index('end'): {text_area.index('end')}")
@@ -329,7 +339,7 @@ class Editor:
             'textcontent': {'background': "lightblue", 'foreground': 'red'},  # 红色字体
             'somematch': {'background': 'lightyellow'}, 
             'linediffer': {'foreground': 'red'},  # 红色字体
-            'selected_text': {'background': 'blue'}, # 被选中内容的背景色和字体颜色
+            'selected_text': {'background': 'lightblue', 'foreground': 'black'}, # 被选中内容的背景色和字体颜色
             'invalidfilltext' : {'background': 'grey'},
         }
 
