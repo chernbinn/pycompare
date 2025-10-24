@@ -351,15 +351,39 @@ class Editor:
     @staticmethod
     def configure_tags(text_area):
         # 'uniqline' : {'background': "lightblue"},
-        tags_and_styles = {
-            'spacesimage': {'background': 'lightgrey'},
-            'textcontent': {'background': "lightblue", 'foreground': 'red'},  # 红色字体
-            'somematch': {'background': 'lightyellow'}, 
-            'linediffer': {'foreground': 'red'},  # 红色字体
-            'selected_text': {'background': 'skyblue'}, # 只设置背景色，不设置前景色
-            'selected_text_foreground': {'foreground': 'black'}, # 单独设置选中文字的前景色为黑色
-            'invalidfilltext' : {'background': 'grey'},
-        }
+        stype_theme = 1
+        tags_and_styles = { }
+        match stype_theme:
+            case 1:
+                tags_and_styles = {
+                    'spacesimage': {'background': 'lightgrey'},
+                    'textcontent': {'background': "lightblue", 'foreground': 'red'},  # 红色字体
+                    'somematch': {'background': 'lightyellow'}, 
+                    'linediffer': {'foreground': 'red'},  # 红色字体
+                    'selected_text': {'background': 'skyblue'}, # 只设置背景色，不设置前景色
+                    'selected_text_foreground': {'foreground': 'black'}, # 单独设置选中文字的前景色为黑色
+                    'invalidfilltext' : {'background': 'grey'},
+                }
+            case 2:
+                tags_and_styles = {
+                    'spacesimage': {'background': 'lightgrey'},
+                    'textcontent': {'background': "#FAFAFA", 'foreground': '#D32F2F'},  # 红色字体
+                    'somematch': {'background': '#F5EDED'}, 
+                    'linediffer': {'foreground': '#6D214F'},  # 红色字体
+                    'selected_text': {'background': 'skyblue'}, # 只设置背景色，不设置前景色
+                    'selected_text_foreground': {'foreground': 'black'}, # 单独设置选中文字的前景色为黑色
+                    'invalidfilltext' : {'background': 'grey'},
+                }
+            case 3:
+                tags_and_styles = {
+                    'spacesimage': {'background': 'lightgrey'},
+                    'textcontent': {'background': "#ECEFF1", 'foreground': '#C62828'},  # 红色字体
+                    'somematch': {'background': '#F8F0E5'}, 
+                    'linediffer': {'foreground': '#C62828'},  # 红色字体
+                    'selected_text': {'background': 'skyblue'}, # 只设置背景色，不设置前景色
+                    'selected_text_foreground': {'foreground': 'black'}, # 单独设置选中文字的前景色为黑色
+                    'invalidfilltext' : {'background': 'grey'},
+                }        
 
         # 使用 tag_configure 配置每个标签的样式
         for tag, style in tags_and_styles.items():
