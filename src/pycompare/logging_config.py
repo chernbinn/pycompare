@@ -12,13 +12,24 @@ from functools import lru_cache
 import atexit
 from logging.handlers import RotatingFileHandler
 
+# configure before using
+# common config，必须在使用前配置
+MAIN_PACKAGE_NAME = "pycompare"
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+# release config，一般情况下可以不配置
+# 需要开发者主动配置,可以是相对路径，也可以是绝对路径
+_config_path = Path.home() / MAIN_PACKAGE_NAME / "logging.json"
+# 当没有log配置文件时或者配置文件中没有指定目录，该配置有效
+_log_path = None
+# end
+
 @lru_cache(maxsize=None)
 def is_development_mode():
     """
     判断当前包是否处于开发模式。
     :return: 如果包是以可编辑(-e)模式安装的返回True，否则返回False。
     """
-    package_name = Path(__file__).parent.name
+    package_name = MAIN_PACKAGE_NAME
     # 获取所有site-packages目录
     site_paths = [
         Path(p) 
@@ -45,12 +56,13 @@ def is_development_mode():
     return None
 
 _IS_DEV_MODE = is_development_mode()
-# 需要开发者主动配置,可以是相对路径，也可以是绝对路径（相对于当前文件logging_config.py的路径）
-_config_path = Path.home() / "pycompare" / "logging.json"
-_log_path = None
-if is_development_mode():
-    _config_path = Path(__file__).parent.parent.parent / 'logging.json'
-    _log_path = Path(__file__).parent.parent.parent / "logs"
+
+if _IS_DEV_MODE:
+    project_root = PROJECT_ROOT
+
+    project_root = project_root.resolve()
+    _config_path = project_root / 'logging.json'
+    _log_path = project_root / "logs"
 
 """ json demo content:
 {
@@ -310,6 +322,16 @@ def _setup_exception_handling(logger: logging.Logger) -> None:
     sys.excepthook = handle_uncaught_exception
     threading.excepthook = handle_thread_exception
 
+class DevModeLoggerAdapter(logging.LoggerAdapter):
+    """
+    开发模式日志适配器，自动为error方法添加异常栈信息
+    """
+    def error(self, msg, *args, exc_info=None, **kwargs):
+        # 开发模式下，如果没有显式提供exc_info且当前有异常上下文，则自动获取异常栈
+        if exc_info is None and sys.exc_info()[0] is not None:
+            exc_info = True
+        super().error(msg, *args, exc_info=exc_info, **kwargs)
+
 def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, max_bytes=10485760, backup_count=0):
     # 参数说明：
     # max_bytes=10485760 (10MB) 单个日志文件最大尺寸
@@ -347,17 +369,19 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
     
     # 创建模块级logger
     logger = logging.getLogger(module_name)
-    # adapter = logging.LoggerAdapter(logger, {'log_tag': log_tag}) # 可以不需要绑定log_tag，log_tag可以传递给name,直接使用%(name)s    
     logger.setLevel(global_log_level)  # 过滤日志的第一个步骤，设置全局日志级别
 
     # 清除现有handler
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
         handler.close()
-    formatter = logging.Formatter(
-        _current_config["log_format"] if _current_config.get("log_format", None) else
-            '%(asctime)s-%(funcName)s:%(lineno)d-%(levelname)s-[%(name)s]: %(message)s'
-    )
+
+    formatter = logging.Formatter('%(message)s')
+    if not _current_config.get("release", False):
+        formatter = logging.Formatter(
+            _current_config["log_format"] if _current_config.get("log_format", None) else
+                '%(asctime)s-[%(name)s:%(funcName)s:%(lineno)d]-%(levelname)s: %(message)s'
+        )
 
     log_files = []
     if enable_file and (not isinstance(sys.stdout, Tee) or not isinstance(sys.stderr, Tee)):
@@ -404,6 +428,10 @@ def setup_logging(log_level=logging.INFO, log_tag=None, b_log_file:bool=False, m
 
     # 配置异常处理, 使用了stdout、stderr重定向，不需要使用该方法
     #_setup_exception_handling(logger)
+
+    # 开发模式下返回增强的LoggerAdapter，自动处理异常栈信息
+    if not _current_config['release'] and _IS_DEV_MODE:
+        return DevModeLoggerAdapter(logger, {})
 
     return logger
 
