@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import TclError
 from pycompare.workspace.events_queue import (
     group_event_decorator,
     update_cursor_position,
@@ -21,44 +22,58 @@ class Editor:
     class EditorEvent:
         # 定义事件处理函数
         @staticmethod
-        # @group_event_decorator(event_type="selection", debounce_time=0, isbreak=True)
+        @group_event_decorator(event_type="selection", debounce_time=0, isbreak=True)
         def on_selection(text_area, event, argsdict):
-            if QUEUE_EVENT_LOG: logger.debug("Selection事件触发")
+            #logger.debug("Selection事件触发")
             b_remove_selected_tag = False
             try:
                 start_index = text_area.index("sel.first")
                 end_index = text_area.index("sel.last")
                 if end_index == text_area.index("end"):
                     logger.debug(f"end_index: {end_index} equal end")
-                    end_index = text_area.index("end-2 lines lineend")
-                    # 移除默认选中的默认颜色标记
-                    text_area.tag_remove("sel", end_index, "end")
+                    end_index = text_area.index("end-4 lines lineend")
+                    end_line = int(end_index.split('.')[0])
 
-                if QUEUE_EVENT_LOG:
-                    selected_text = text_area.get("sel.first", "sel.last")
-                    length = len(selected_text)
-                    logger.debug(f"起始位置: {start_index}, 结束位置: {end_index}, 长度: {length} 字符")
-                    logger.debug(f"选中的文本: '{selected_text}'")
-                
-                text_area.tag_remove("selected_text", '1.0', 'end')
-                text_area.tag_remove("selected_text_foreground", '1.0', 'end')
+                    logger.debug(f"end_index: {end_index}")
+                    remove_start = f"{end_line+1}.0"
+
+                    for line in range(end_line, 0, -1):
+                        tags = text_area.tag_names(f"{line}.0") + text_area.tag_names(f"{line}.end")
+                        tags = set(tags) - set(['sel', 'invalidfilltext'])
+                        if tags:
+                            end_index = text_area.index(f"{line}.end")
+                            remove_start = f"{line+1}.0"
+                            break
+                    logger.debug(f"end_index: {end_index}")
+
+                    # 移除默认选中的默认颜色标记
+                    text_area.tag_remove("sel", remove_start, "end")
+
+                #logger.debug(f"起始位置: {start_index}, 结束位置: {end_index}")
+                text_area.tag_remove("selected_text", start_index, end_index)
+                text_area.tag_remove("selected_text_foreground", start_index, end_index)
                 text_area.tag_add("selected_text", start_index, end_index)
                 text_area.tag_add("selected_text_foreground", start_index, end_index)
                 
                 event_data = { }
                 b_remove_selected_tag = start_index == end_index
-                
+            except TclError as e:
+                if 'sel' in str(e):
+                    b_remove_selected_tag = True
+                else:
+                    logger.error(f"TclError: {e}")
             except Exception as e:
-                #logger.error(f"Exception: {e}")
-                b_remove_selected_tag = True
+                logger.error(f"Exception: {e}", exc_info=True)
 
             if b_remove_selected_tag:
                 text_area.tag_remove("selected_text", '1.0', 'end')
+                text_area.tag_remove("selected_text_foreground", '1.0', 'end')
+                text_area.tag_remove("sel", '1.0', 'end')
                 event_data = None
 
             # 如果使用group_event_decorator，需要返回event_data
-            #return event_data
-            return "break"
+            return event_data
+            #return "break"
 
         @staticmethod
         def on_copy(event, text_area):
@@ -351,7 +366,6 @@ class Editor:
             text_area.tag_configure(tag, **style)
         
         # 配置内置的sel标签，只设置背景色，不设置前景色，以保持原有文字颜色
-        text_area.tag_configure("sel", background="cornflowerblue")
         text_area.tag_raise("textcontent")
         text_area.tag_raise("linediffer")
         text_area.tag_raise("selected_text")
