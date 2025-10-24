@@ -543,6 +543,23 @@ class Workspace:
         # 获取文本内容（也可以放子线程）
         left_content = Editor.get_area(text_area)
         right_content = Editor.get_area(tag_area)
+        
+        # 保存滚动位置和光标位置
+        try:
+            # 获取文本区域的滚动位置
+            scroll_x = text_area.xview()[0]
+            scroll_y = text_area.yview()[0]
+            # 获取光标位置
+            cursor_pos = text_area.index("insert")
+            # 保存这些位置信息
+            position_info = {
+                'scroll_x': scroll_x,
+                'scroll_y': scroll_y,
+                'cursor_pos': cursor_pos
+            }
+        except Exception as e:
+            logger.error(f"保存位置信息失败: {e}")
+            position_info = None
 
         # === 子线程执行耗时操作 ===
         def worker():
@@ -558,7 +575,8 @@ class Workspace:
                         'match_pairs': match_pairs,
                         'left_content': left_content,
                         'right_content': right_content,
-                        'widgets': (text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl)
+                        'widgets': (text_area, tag_area, text_line_numbers, tag_line_numbers, lfl, rfl),
+                        'position_info': position_info
                     }
                 })
             except Exception as e:
@@ -634,6 +652,37 @@ class Workspace:
 
             # 更新行号
             Editor.update_line_numbers(text_area, text_line_numbers, tag_line_numbers)
+            
+            # 恢复滚动位置和光标位置
+            position_info = data.get('position_info')
+            if position_info:
+                try:
+                    # 延迟一小段时间确保UI完全更新
+                    def restore_position():
+                        try:
+                            # 恢复滚动位置
+                            if 'scroll_x' in position_info and 'scroll_y' in position_info:
+                                text_area.xview_moveto(position_info['scroll_x'])
+                                text_area.yview_moveto(position_info['scroll_y'])
+                            
+                            # 恢复光标位置，先检查位置是否有效
+                            if 'cursor_pos' in position_info:
+                                try:
+                                    # 尝试移动光标，如果位置无效则不处理
+                                    text_area.mark_set("insert", position_info['cursor_pos'])
+                                except TclError:
+                                    # 位置无效，不做处理
+                                    pass
+                            
+                            # 设置焦点到文本区域
+                            text_area.focus_set()
+                        except Exception as e:
+                            logger.error(f"恢复位置信息失败: {e}")
+                    
+                    # 使用after来确保在UI更新完成后执行
+                    self.root.after(100, restore_position)
+                except Exception as e:
+                    logger.error(f"调度恢复位置失败: {e}")
 
             logger.debug("异步刷新完成")
         else:
