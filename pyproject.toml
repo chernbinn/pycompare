@@ -26,13 +26,14 @@ dev = [
     "setuptools-git-versioning>=2.0,<3",
     "nuitka>=2.7.14",
     "zstandard>=0.24.0",
+    "pip",
 ]
 
 [project.scripts]
-pycompare-gui = "pycompare.pycompare:cli"
+pycompare = "pycompare.pycompare:cli"
 
-#[project.gui-scripts]
-#pycompare-gui = "pycompare.pycompare:cli"
+[project.gui-scripts]
+pycompare-gui = "pycompare.pycompare:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
