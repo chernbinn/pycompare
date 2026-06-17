@@ -4,17 +4,40 @@ from tkinter import Toplevel, Label, Entry, StringVar, IntVar, Checkbutton, Radi
 
 
 class SearchDialog:
+    _DIALOG_WIDTH = 320
+    _DIALOG_HEIGHT = 180
     def __init__(self, parent, workspace):
         self.parent = parent
         self.workspace = workspace
         self.dialog = Toplevel(parent)
         self.dialog.title("查找")
-        self.dialog.geometry("350x180")
+        self.dialog.geometry(f"{self._DIALOG_WIDTH}x{self._DIALOG_HEIGHT}")
         self.dialog.transient(parent)
         self.dialog.resizable(False, False)
         # 设置对话框为模态，确保用户必须与它交互
         self.dialog.grab_set()
-        
+
+        # 强制更新父窗口和对话框的信息，确保获取到准确尺寸
+        parent.update_idletasks()
+        self.dialog.update_idletasks()
+
+        # 获取父窗口的位置和尺寸
+        parent_x = parent.winfo_rootx()
+        parent_y = parent.winfo_rooty()
+        parent_width = parent.winfo_width()
+        parent_height = parent.winfo_height()
+
+        # 对话框尺寸
+        dialog_width = self._DIALOG_WIDTH
+        dialog_height = self._DIALOG_HEIGHT
+
+        # 计算左上角坐标：水平居中，垂直在父窗口顶部
+        x = parent_x + (parent_width - dialog_width) // 2
+        y = parent_y  # 紧贴父窗口上边沿
+
+        # 设置最终位置
+        self.dialog.geometry(f"+{x}+{y}")
+
         # 搜索关键词
         Label(self.dialog, text="查找内容:").grid(row=0, column=0, sticky=W, padx=5, pady=5)
         self.search_var = StringVar()

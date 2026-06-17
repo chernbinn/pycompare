@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox, Menu, RAISED, BOTTOM, X
 from tkinterdnd2 import TkinterDnD
 from pycompare.workspace.workspace import Workspace
 from pycompare._version import __version__
-from pycompare.search_dialog import SearchDialog
+from pycompare.workspace.search_dialog import SearchDialog
 
 class Application:
     def __init__(self, root):
