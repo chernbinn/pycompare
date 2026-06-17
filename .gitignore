@@ -8,6 +8,8 @@ wheels/
 *.exe
 *.log
 
+main.py
+
 # Virtual environments
 .venv
 

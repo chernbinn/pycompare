@@ -3,6 +3,9 @@
 #   .\release_exe\build_exe.ps1             # 构建项目
 #   .\release_exe\build_exe.ps1 --clean     # 清理临时文件
 
+Write-Host "❌ 已废弃，请使用 build_exe.py 构建项目." -ForegroundColor Red
+exit 0
+
 # 定义一个清除函数
 function Clean-Folder {
     param (
