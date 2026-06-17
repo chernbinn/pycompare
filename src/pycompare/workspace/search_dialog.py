@@ -1,10 +1,16 @@
 import re
 import tkinter as tk
-from tkinter import Toplevel, Label, Entry, StringVar, IntVar, Checkbutton, Radiobutton, Button, Frame, messagebox, INSERT, LEFT, W
+from tkinter import (
+    Toplevel, Label, Entry, StringVar, IntVar, Checkbutton, Radiobutton, 
+    Button, Frame, messagebox, INSERT, LEFT, W, BOTH
+    )
 
+import logging
+from pycompare.logging_config import setup_logging
+logger = setup_logging(logging.DEBUG, log_tag=__name__)
 
 class SearchDialog:
-    _DIALOG_WIDTH = 320
+    _DIALOG_WIDTH = 300
     _DIALOG_HEIGHT = 180
     def __init__(self, parent, workspace):
         self.parent = parent
@@ -16,6 +22,7 @@ class SearchDialog:
         self.dialog.resizable(False, False)
         # 设置对话框为模态，确保用户必须与它交互
         self.dialog.grab_set()
+        self.dialog.pack_propagate(False)
 
         # 强制更新父窗口和对话框的信息，确保获取到准确尺寸
         parent.update_idletasks()
@@ -25,11 +32,11 @@ class SearchDialog:
         parent_x = parent.winfo_rootx()
         parent_y = parent.winfo_rooty()
         parent_width = parent.winfo_width()
-        parent_height = parent.winfo_height()
+        # parent_height = parent.winfo_height()
 
         # 对话框尺寸
         dialog_width = self._DIALOG_WIDTH
-        dialog_height = self._DIALOG_HEIGHT
+        # dialog_height = self._DIALOG_HEIGHT
 
         # 计算左上角坐标：水平居中，垂直在父窗口顶部
         x = parent_x + (parent_width - dialog_width) // 2
@@ -38,29 +45,31 @@ class SearchDialog:
         # 设置最终位置
         self.dialog.geometry(f"+{x}+{y}")
 
+        main_frame = Frame(self.dialog)
+        main_frame.pack(expand=True)
         # 搜索关键词
-        Label(self.dialog, text="查找内容:").grid(row=0, column=0, sticky=W, padx=5, pady=5)
+        Label(main_frame, text="查找内容:").grid(row=0, column=0, sticky=W, padx=5, pady=5)
         self.search_var = StringVar()
-        self.search_entry = Entry(self.dialog, textvariable=self.search_var, width=25)
+        self.search_entry = Entry(main_frame, textvariable=self.search_var, width=25)
         self.search_entry.grid(row=0, column=1, padx=5, pady=5)
         # 在对话框显示时确保搜索框获取焦点
         self.dialog.after(10, lambda: self.search_entry.focus_set())
         
         # 区分大小写
         self.case_var = IntVar()
-        self.case_check = Checkbutton(self.dialog, text="区分大小写", variable=self.case_var)
+        self.case_check = Checkbutton(main_frame, text="区分大小写", variable=self.case_var)
         self.case_check.grid(row=1, column=0, columnspan=2, sticky=W, padx=5)
         
         # 搜索窗口选择
-        Label(self.dialog, text="搜索范围:").grid(row=2, column=0, sticky=W, padx=5, pady=5)
+        Label(main_frame, text="搜索范围:").grid(row=2, column=0, sticky=W, padx=5, pady=5)
         self.target_var = StringVar(value="left")
-        left_radio = Radiobutton(self.dialog, text="左侧窗口", variable=self.target_var, value="left")
-        right_radio = Radiobutton(self.dialog, text="右侧窗口", variable=self.target_var, value="right")
+        left_radio = Radiobutton(main_frame, text="左侧窗口", variable=self.target_var, value="left")
+        right_radio = Radiobutton(main_frame, text="右侧窗口", variable=self.target_var, value="right")
         left_radio.grid(row=2, column=1, sticky=W)
         right_radio.grid(row=3, column=1, sticky=W)
         
         # 按钮
-        button_frame = Frame(self.dialog)
+        button_frame = Frame(main_frame)
         button_frame.grid(row=4, column=0, columnspan=2, pady=10)
         
         self.find_next_btn = Button(button_frame, text="查找下一个", command=self.find_next)
@@ -69,7 +78,7 @@ class SearchDialog:
         self.find_prev_btn = Button(button_frame, text="查找上一个", command=self.find_previous)
         self.find_prev_btn.pack(side=LEFT, padx=5)
         
-        self.close_btn = Button(button_frame, text="关闭", command=self.dialog.destroy)
+        self.close_btn = Button(button_frame, text="关 闭", command=self.dialog.destroy)
         self.close_btn.pack(side=LEFT, padx=5)
         
         # 绑定快捷键
