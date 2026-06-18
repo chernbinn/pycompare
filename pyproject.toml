@@ -18,15 +18,14 @@ dependencies = [
     "psutil>=7.0.0",
     "tkinterdnd2>=0.4.3",
 ]
-requires-python = ">=3.11.2"
+requires-python = ">=3.12.13"
 
 [project.optional-dependencies]
 dev = [
     "pre-commit>4.0",
     "setuptools-git-versioning>=2.0,<3",
     "nuitka>=2.7.14",
-    "zstandard>=0.24.0",
-    "pip",
+    "pip"
 ]
 
 [project.scripts]
