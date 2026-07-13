@@ -16,25 +16,25 @@ class FileDrop:
 
     def on_drop(self, event):
         """
-        处理文件拖放事件
-        event.data 是一个花括号包围的字符串，如 {C:/path/to/file.txt}
+        处理文件拖放事件（单文件）
         """
-        # 获取拖入的数据
         data = event.data
+        # logger.info(f"Received drop event: {data}")
 
-        # 清理数据：去除大括号和引号
+        # 去除首尾的花括号（如果有）
         if data.startswith('{') and data.endswith('}'):
-            file_paths = data[1:-1]  # 去掉首尾 {}
-            # 分割多个文件（如果有空格或换行）
-            paths = file_paths.split()
+            file_path = data[1:-1]
         else:
-            paths = [data]
+            file_path = data
 
-        # 插入到文本框
-        for path in paths:
-            self.text_area.insert('end', path + '\n')
+        # 去除可能存在的引号（有时路径会被引号包裹）
+        file_path = file_path.strip('"').strip("'")
 
-        # 恢复样式
-        #self.on_drag_leave(None)
-        # 设置文件路径，触发显示文件内容
-        self.path_var.set(paths[0])
+        # logger.info(f"Extracted file path: {file_path}")
+
+        # 清空文本框，显示新路径
+        self.text_area.delete('1.0', 'end')
+        self.text_area.insert('end', file_path)
+
+        # 更新路径变量（触发外部显示）
+        self.path_var.set(file_path)
