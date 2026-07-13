@@ -345,7 +345,7 @@ class Editor:
                 logger.info(f"Successfully read {len(lines)} lines from {file_path}")
                 return lines
         except Exception as e:
-            logger.error(f"Failed to read file {file_path}", error=str(e))
+            logger.error(f"Failed to read file {file_path}, error: {str(e)}")
             raise
 
     @staticmethod
@@ -447,7 +447,7 @@ class Editor:
                 file.write(content)
             logger.info(f"File successfully saved to {path}")
         except Exception as e:
-            logger.error(f"Failed to save file to {path}", error=str(e))
+            logger.error(f"Failed to save file to {path}, error: {str(e)}")
             raise
 
     @staticmethod
