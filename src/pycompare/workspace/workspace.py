@@ -82,22 +82,22 @@ class Workspace:
 
         # 文本区域（先不配置 tags 或复杂 bind）
         self.l_line_numbers = Text(self.text_frame, width=4, padx=5, takefocus=0,
-                                border=1, background='lightgrey', cursor='arrow')
+                                border=1, background='lightgrey', cursor='arrow', state=DISABLED)
         self.l_line_numbers.grid(row=0, column=0, sticky=NS)
 
         self.lfl = Text(self.text_frame, width=6, padx=5, takefocus=0,
-                        border=1, background='lightgrey', cursor='arrow')
+                        border=1, background='lightgrey', cursor='arrow', state=DISABLED)
         self.lfl.grid(row=0, column=1, sticky=NS)
 
         self.l_text_area = Text(self.text_frame, wrap=NONE, undo=True, border=1)
         self.l_text_area.grid(row=0, column=2, sticky=NSEW)
 
         self.r_line_numbers = Text(self.text_frame, width=4, padx=5, takefocus=0,
-                                border=1, background='lightgrey', cursor='arrow')
+                                border=1, background='lightgrey', cursor='arrow', state=DISABLED)
         self.r_line_numbers.grid(row=0, column=4, sticky=NS)
 
         self.rfl = Text(self.text_frame, width=6, padx=5, takefocus=0,
-                        border=1, background='lightgrey', cursor='arrow')
+                        border=1, background='lightgrey', cursor='arrow', state=DISABLED)
         self.rfl.grid(row=0, column=5, sticky=NS)
 
         self.r_text_area = Text(self.text_frame, wrap=NONE, undo=True, border=1)
@@ -118,6 +118,7 @@ class Workspace:
         self.text_frame.grid_rowconfigure(0, weight=1)
         self.text_frame.grid_columnconfigure(2, weight=1)
         self.text_frame.grid_columnconfigure(6, weight=1)
+        self.l_text_area.focus_set()
         
     def _delay_bind_events(self):
         """绑定按钮、路径监听、拖放等基础交互"""
